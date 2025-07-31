@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>טיימר עם צלצול</title>
+    <!-- טעינת Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* הגדרת גופן Inter כברירת מחדל */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* הסתרת חצים בשדות קלט מספריים */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md text-center transform transition-all duration-300 hover:scale-105 border border-gray-100">
+        <h1 class="text-4xl font-extrabold text-gray-700 mb-6">טיימר</h1>
+
+        <!-- תצוגת הטיימר -->
+        <div id="timerDisplay" class="text-7xl font-mono text-gray-800 mb-8 bg-gray-100 p-8 rounded-2xl border-2 border-gray-200 shadow-inner">
+            00:00:00
+        </div>
+
+        <!-- קלט זמן -->
+        <div class="flex justify-center items-center space-x-4 mb-8">
+            <div class="flex flex-col items-center">
+                <label for="hoursInput" class="text-lg font-semibold text-gray-600 mb-2">שעות</label>
+                <input type="number" id="hoursInput" min="0" max="99" value="0"
+                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+            </div>
+            <div class="text-5xl font-bold text-gray-500">:</div>
+            <div class="flex flex-col items-center">
+                <label for="minutesInput" class="text-lg font-semibold text-gray-600 mb-2">דקות</label>
+                <input type="number" id="minutesInput" min="0" max="59" value="0"
+                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+            </div>
+            <div class="text-5xl font-bold text-gray-500">:</div>
+            <div class="flex flex-col items-center">
+                <label for="secondsInput" class="text-lg font-semibold text-gray-600 mb-2">שניות</label>
+                <input type="number" id="secondsInput" min="0" max="59" value="0"
+                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+            </div>
+        </div>
+
+        <!-- בחירת צליל צלצול -->
+        <div class="mb-8">
+            <label for="alarmSoundSelect" class="block text-lg font-semibold text-gray-600 mb-3">בחר צליל צלצול:</label>
+            <select id="alarmSoundSelect"
+                    class="w-full p-3 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200 bg-white shadow-sm">
+                <option value="sound1">צלצול קלאסי</option>
+                <option value="sound2">פעמון עדין</option>
+                <option value="sound3">אזעקה חזקה</option>
+                <option value="sound4">צפצוף קצר</option>
+                <option value="sound5">מנגינה שמחה</option>
+            </select>
+        </div>
+
+        <!-- כפתורי שליטה -->
+        <div class="flex justify-center space-x-4">
+            <button id="startButton"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-indigo-300 text-2xl">
+                התחל
+            </button>
+            <button id="stopButton"
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-gray-300 text-2xl"
+                    disabled>
+                עצור
+            </button>
+            <button id="resetButton"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-red-300 text-2xl"
+                    disabled>
+                אפס
+            </button>
+        </div>
+
+        <!-- הודעות (לדוגמה, כאשר הטיימר מסתיים) -->
+        <div id="messageBox" class="mt-8 p-4 bg-blue-100 text-blue-800 rounded-lg hidden"></div>
+
+    </div>
+
+    <script>
+        // אלמנטים מה-DOM
+        const timerDisplay = document.getElementById('timerDisplay');
+        const hoursInput = document.getElementById('hoursInput');
+        const minutesInput = document.getElementById('minutesInput');
+        const secondsInput = document.getElementById('secondsInput');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const resetButton = document.getElementById('resetButton');
+        const alarmSoundSelect = document.getElementById('alarmSoundSelect');
+        const messageBox = document.getElementById('messageBox');
+
+        // משתנים גלובליים לטיימר
+        let countdownInterval;
+        let totalSeconds = 0;
+        let isRunning = false;
+        let alarmAudio; // אובייקט Audio עבור הצלצול
+
+        // אובייקטים של צלילי אזעקה (באופן אידיאלי, אלה יהיו קבצי אודיו אמיתיים)
+        // לצורך הדגמה, נשתמש ב-Tone.js ליצירת צלילים פשוטים.
+        // ביישום אמיתי, היית טוען קבצי .mp3 או .wav.
+        // כאן אנו משתמשים ב-Tone.js כדי למנוע צורך בכתובות URL חיצוניות לקבצי אודיו.
+        const alarmSounds = {
+            sound1: () => { // צלצול קלאסי
+                const synth = new Tone.Synth().toDestination();
+                synth.triggerAttackRelease("C4", "8n");
+                setTimeout(() => synth.triggerAttackRelease("E4", "8n"), 200);
+                setTimeout(() => synth.triggerAttackRelease("G4", "8n"), 400);
+            },
+            sound2: () => { // פעמון עדין
+                const synth = new Tone.MembraneSynth().toDestination();
+                synth.triggerAttackRelease("C3", "4n");
+            },
+            sound3: () => { // אזעקה חזקה
+                const noise = new Tone.NoiseSynth().toDestination();
+                noise.triggerAttackRelease("16n", Tone.now(), 0.5);
+            },
+            sound4: () => { // צפצוף קצר
+                const osc = new Tone.Oscillator(440, "sine").toDestination();
+                osc.start().stop("+0.1");
+            },
+            sound5: () => { // מנגינה שמחה
+                const synth = new Tone.Synth().toDestination();
+                const now = Tone.now();
+                synth.triggerAttackRelease("C4", "8n", now);
+                synth.triggerAttackRelease("D4", "8n", now + 0.2);
+                synth.triggerAttackRelease("E4", "8n", now + 0.4);
+                synth.triggerAttackRelease("G4", "8n", now + 0.6);
+            }
+        };
+
+        // טעינת ספריית Tone.js
+        const loadToneJs = () => {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js";
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        };
+
+        // פונקציה לעדכון תצוגת הטיימר
+        function updateDisplay() {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            timerDisplay.textContent =
+                `${String(hours).padStart(2, '0')}:` +
+                `${String(minutes).padStart(2, '0')}:` +
+                `${String(seconds).padStart(2, '0')}`;
+        }
+
+        // פונקציה להצגת הודעה למשתמש
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800', 'bg-blue-100', 'text-blue-800');
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            } else if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else {
+                messageBox.classList.add('bg-blue-100', 'text-blue-800');
+            }
+            messageBox.classList.remove('hidden');
+        }
+
+        // פונקציה להסתרת הודעה
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+        }
+
+        // פונקציה להפעלת הטיימר
+        async function startTimer() {
+            if (isRunning) return; // מונע הפעלה כפולה
+
+            // ודא ש-Tone.js נטען לפני הפעלת צלילים
+            if (typeof Tone === 'undefined') {
+                showMessage('טוען ספריות אודיו...', 'info');
+                await loadToneJs();
+                await Tone.start(); // הפעלת הקונטקסט של האודיו
+                hideMessage();
+            } else if (Tone.context.state !== 'running') {
+                await Tone.start();
+            }
+
+
+            const hours = parseInt(hoursInput.value) || 0;
+            const minutes = parseInt(minutesInput.value) || 0;
+            const seconds = parseInt(secondsInput.value) || 0;
+
+            totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
+
+            if (totalSeconds <= 0) {
+                showMessage('אנא הגדר זמן חוקי (גדול מ-0).', 'error');
+                return;
+            }
+
+            isRunning = true;
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            resetButton.disabled = false;
+            hoursInput.disabled = true;
+            minutesInput.disabled = true;
+            secondsInput.disabled = true;
+            alarmSoundSelect.disabled = true;
+            hideMessage(); // נקה הודעות קודמות
+
+            countdownInterval = setInterval(() => {
+                if (totalSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    isRunning = false;
+                    playAlarm();
+                    showMessage('הזמן נגמר!', 'success');
+                    stopButton.disabled = true; // עצור את כפתור העצירה לאחר שהטיימר הסתיים
+                    return;
+                }
+                totalSeconds--;
+                updateDisplay();
+            }, 1000);
+        }
+
+        // פונקציה לעצירת הטיימר
+        function stopTimer() {
+            clearInterval(countdownInterval);
+            isRunning = false;
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            resetButton.disabled = false;
+            hoursInput.disabled = false;
+            minutesInput.disabled = false;
+            secondsInput.disabled = false;
+            alarmSoundSelect.disabled = false;
+            hideMessage();
+        }
+
+        // פונקציה לאיפוס הטיימר
+        function resetTimer() {
+            clearInterval(countdownInterval);
+            isRunning = false;
+            totalSeconds = 0;
+            updateDisplay();
+            hoursInput.value = 0;
+            minutesInput.value = 0;
+            secondsInput.value = 0;
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            resetButton.disabled = true;
+            hoursInput.disabled = false;
+            minutesInput.disabled = false;
+            secondsInput.disabled = false;
+            alarmSoundSelect.disabled = false;
+            hideMessage();
+            if (alarmAudio) {
+                alarmAudio.pause();
+                alarmAudio.currentTime = 0;
+            }
+        }
+
+        // פונקציה להפעלת צליל האזעקה
+        function playAlarm() {
+            const selectedSound = alarmSoundSelect.value;
+            if (alarmSounds[selectedSound]) {
+                // Tone.js requires a user interaction to start its audio context
+                // This is handled in startTimer, but if playAlarm is called directly,
+                // ensure Tone.start() is called first.
+                alarmSounds[selectedSound]();
+            } else {
+                console.error("צליל אזעקה לא נמצא:", selectedSound);
+            }
+        }
+
+        // מאזיני אירועים
+        startButton.addEventListener('click', startTimer);
+        stopButton.addEventListener('click', stopTimer);
+        resetButton.addEventListener('click', resetTimer);
+
+        // עדכון תצוגת הטיימר כאשר המשתמש משנה את הקלט
+        hoursInput.addEventListener('input', updateDisplayFromInput);
+        minutesInput.addEventListener('input', updateDisplayFromInput);
+        secondsInput.addEventListener('input', updateDisplayFromInput);
+
+        function updateDisplayFromInput() {
+            if (isRunning) return; // אל תעדכן אם הטיימר פועל
+            const hours = parseInt(hoursInput.value) || 0;
+            const minutes = parseInt(minutesInput.value) || 0;
+            const seconds = parseInt(secondsInput.value) || 0;
+            timerDisplay.textContent =
+                `${String(hours).padStart(2, '0')}:` +
+                `${String(minutes).padStart(2, '0')}:` +
+                `${String(seconds).padStart(2, '0')}`;
+        }
+
+        // ודא שהקלט תמיד מספר חיובי
+        hoursInput.addEventListener('change', (e) => {
+            if (e.target.value < 0) e.target.value = 0;
+            if (e.target.value > 99) e.target.value = 99;
+        });
+        minutesInput.addEventListener('change', (e) => {
+            if (e.target.value < 0) e.target.value = 0;
+            if (e.target.value > 59) e.target.value = 59;
+        });
+        secondsInput.addEventListener('change', (e) => {
+            if (e.target.value < 0) e.target.value = 0;
+            if (e.target.value > 59) e.target.value = 59;
+        });
+
+        // אתחל תצוגה ראשונית
+        updateDisplay();
+    </script>
+</body>
+</html>
