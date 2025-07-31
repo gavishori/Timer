@@ -3,27 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>טיימר עם צלצול</title>
+    <title>טיימר</title>
     <!-- טעינת Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- טעינת גופנים מ-Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Oxygen+Mono:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         /* הגדרת גופן Assistant כברירת מחדל לטקסט כללי */
@@ -39,106 +24,67 @@
         input[type="number"] {
             -moz-appearance: textfield;
         }
-        /* גופן ברירת מחדל לספרות הטיימר (ניתן לשינוי באמצעות JS) */
+        /* גופן קבוע לספרות הטיימר */
         #timerDisplay {
-            font-family: 'Space Mono', monospace; /* Default font for digits */
+            font-family: 'Cutive Mono', monospace; /* הגופן שנבחר */
+            font-weight: bold; /* מודגש */
         }
     </style>
 </head>
 <body class="bg-blue-50 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-2xl text-center transform transition-all duration-300 hover:scale-105 border border-gray-100">
-        <h1 class="text-4xl font-extrabold text-gray-700 mb-6">טיימר</h1>
+    <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-full lg:max-w-4xl xl:max-w-5xl text-center transform transition-all duration-300 hover:scale-105 border border-gray-100">
+        <h1 class="text-3xl font-extrabold text-gray-700 mb-5">טיימר</h1>
 
         <!-- תצוגת הטיימר -->
-        <div id="timerDisplay" class="text-7xl md:text-8xl text-gray-800 mb-6 bg-gray-100 p-6 md:p-8 rounded-2xl border-2 border-gray-200 shadow-inner">
+        <div id="timerDisplay" class="text-6xl md:text-7xl text-gray-800 mb-5 bg-gray-100 p-4 md:p-6 rounded-2xl border-2 border-gray-200 shadow-inner">
             00:00:00
         </div>
 
-        <!-- קלט זמן עם חיצים אנכיים -->
-        <div class="flex flex-col md:flex-row justify-center items-center space-y-6 md:space-y-0 md:space-x-8 mb-8" id="timeInputsContainer">
+        <!-- קלט זמן בקו ישר (שעות:דקות:שניות) -->
+        <div class="flex flex-row justify-center items-center space-x-4 md:space-x-6 mb-6" id="timeInputsContainer">
+            <!-- שעות (צד שמאל) -->
             <div class="flex flex-col items-center">
-                <label for="hoursInput" class="text-lg font-semibold text-gray-600 mb-2">שעות</label>
-                <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-4 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300 mb-2" data-action="increment" data-target="hoursInput">+</button>
+                <label for="hoursInput" class="text-base font-semibold text-gray-600 mb-1">שעות</label>
                 <input type="number" id="hoursInput" min="0" max="99" value="0"
-                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
-                <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-4 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300 mt-2" data-action="decrement" data-target="hoursInput">-</button>
+                       class="w-20 p-2 text-2xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
             </div>
-            <div class="hidden md:block text-5xl font-bold text-gray-500">:</div> <!-- מפריד רק בדסקטופ -->
+            <div class="text-4xl font-bold text-gray-500">:</div>
+            <!-- דקות (אמצע) -->
             <div class="flex flex-col items-center">
-                <label for="minutesInput" class="text-lg font-semibold text-gray-600 mb-2">דקות</label>
-                <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-4 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300 mb-2" data-action="increment" data-target="minutesInput">+</button>
+                <label for="minutesInput" class="text-base font-semibold text-gray-600 mb-1">דקות</label>
                 <input type="number" id="minutesInput" min="0" max="59" value="0"
-                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
-                <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-4 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300 mt-2" data-action="decrement" data-target="minutesInput">-</button>
+                       class="w-20 p-2 text-2xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
             </div>
-            <div class="hidden md:block text-5xl font-bold text-gray-500">:</div> <!-- מפריד רק בדסקטופ -->
+            <div class="text-4xl font-bold text-gray-500">:</div>
+            <!-- שניות (צד ימין) -->
             <div class="flex flex-col items-center">
-                <label for="secondsInput" class="text-lg font-semibold text-gray-600 mb-2">שניות</label>
-                <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-4 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300 mb-2" data-action="increment" data-target="secondsInput">+</button>
+                <label for="secondsInput" class="text-base font-semibold text-gray-600 mb-1">שניות</label>
                 <input type="number" id="secondsInput" min="0" max="59" value="0"
-                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
-                <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-4 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300 mt-2" data-action="decrement" data-target="secondsInput">-</button>
+                       class="w-20 p-2 text-2xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
             </div>
-        </div>
-
-        <!-- בחירת צליל צלצול -->
-        <div class="mb-8">
-            <label for="alarmSoundSelect" class="block text-lg font-semibold text-gray-600 mb-3">בחר צליל צלצול:</label>
-            <select id="alarmSoundSelect"
-                    class="w-full p-3 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200 bg-white shadow-sm">
-                <option value="sound1">צלצול קלאסי</option>
-                <option value="sound2">פעמון עדין</option>
-                <option value="sound3">אזעקה חזקה</option>
-                <option value="sound4">צפצוף קצר</option>
-                <option value="sound5">מנגינה שמחה</option>
-            </select>
-        </div>
-
-        <!-- בחירת גופן לספרות הטיימר -->
-        <div class="mb-8">
-            <label for="digitFontSelect" class="block text-lg font-semibold text-gray-600 mb-3">בחר גופן לספרות הטיימר:</label>
-            <select id="digitFontSelect"
-                    class="w-full p-3 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200 bg-white shadow-sm">
-                <option value="'Space Mono', monospace">Space Mono (ברירת מחדל)</option>
-                <option value="'Roboto Mono', monospace">Roboto Mono</option>
-                <option value="'Open Sans Mono', monospace">Open Sans Mono</option>
-                <option value="'Fira Code', monospace">Fira Code</option>
-                <option value="'Inconsolata', monospace">Inconsolata</option>
-                <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
-                <option value="'Source Code Pro', monospace">Source Code Pro</option>
-                <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-                <option value="'Anonymous Pro', monospace">Anonymous Pro</option>
-                <option value="'Cutive Mono', monospace">Cutive Mono</option>
-                <option value="'Fragment Mono', monospace">Fragment Mono</option>
-                <option value="'DM Mono', monospace">DM Mono</option>
-                <option value="'Red Hat Mono', monospace">Red Hat Mono</option>
-                <option value="'Spline Sans Mono', monospace">Spline Sans Mono</option>
-                <option value="'Oxygen Mono', monospace">Oxygen Mono</option>
-                <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
-            </select>
         </div>
 
         <!-- כפתורי שליטה -->
         <div class="flex justify-center space-x-4">
             <button id="startButton"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-indigo-300 text-2xl">
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-indigo-300 text-xl">
                 התחל
             </button>
             <button id="stopButton"
-                    class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-gray-300 text-2xl"
+                    class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-gray-300 text-xl"
                     disabled>
                 עצור
             </button>
             <button id="resetButton"
-                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-red-300 text-2xl"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transform hover:scale-105 transition duration-200 focus:outline-none focus:ring-4 focus:ring-red-300 text-xl"
                     disabled>
                 אפס
             </button>
         </div>
 
         <!-- הודעות (לדוגמה, כאשר הטיימר מסתיים) -->
-        <div id="messageBox" class="mt-8 p-4 bg-blue-100 text-blue-800 rounded-lg hidden"></div>
+        <div id="messageBox" class="mt-6 p-3 bg-blue-100 text-blue-800 rounded-lg hidden"></div>
 
     </div>
 
@@ -151,8 +97,6 @@
         const startButton = document.getElementById('startButton');
         const stopButton = document.getElementById('stopButton');
         const resetButton = document.getElementById('resetButton');
-        const alarmSoundSelect = document.getElementById('alarmSoundSelect');
-        const digitFontSelect = document.getElementById('digitFontSelect'); // New: Font selection dropdown
         const messageBox = document.getElementById('messageBox');
         const timeInputsContainer = document.getElementById('timeInputsContainer');
 
@@ -160,28 +104,10 @@
         let countdownInterval;
         let totalSeconds = 0;
         let isRunning = false;
-        let alarmAudio;
+        let alarmLoop; // משתנה לשמירת לולאת הצלצול
 
-        // אובייקטים של צלילי אזעקה (Tone.js)
+        // אובייקט של צליל אזעקה (Tone.js) - רק מנגינה שמחה
         const alarmSounds = {
-            sound1: () => { // צלצול קלאסי
-                const synth = new Tone.Synth().toDestination();
-                synth.triggerAttackRelease("C4", "8n");
-                setTimeout(() => synth.triggerAttackRelease("E4", "8n"), 200);
-                setTimeout(() => synth.triggerAttackRelease("G4", "8n"), 400);
-            },
-            sound2: () => { // פעמון עדין
-                const synth = new Tone.MembraneSynth().toDestination();
-                synth.triggerAttackRelease("C3", "4n");
-            },
-            sound3: () => { // אזעקה חזקה
-                const noise = new Tone.NoiseSynth().toDestination();
-                noise.triggerAttackRelease("16n", Tone.now(), 0.5);
-            },
-            sound4: () => { // צפצוף קצר
-                const osc = new Tone.Oscillator(440, "sine").toDestination();
-                osc.start().stop("+0.1");
-            },
             sound5: () => { // מנגינה שמחה
                 const synth = new Tone.Synth().toDestination();
                 const now = Tone.now();
@@ -265,16 +191,13 @@
             hoursInput.disabled = true;
             minutesInput.disabled = true;
             secondsInput.disabled = true;
-            alarmSoundSelect.disabled = true;
-            digitFontSelect.disabled = true; // Disable font selection
-            document.querySelectorAll('.control-button').forEach(button => button.disabled = true);
             hideMessage();
 
             countdownInterval = setInterval(() => {
                 if (totalSeconds <= 0) {
                     clearInterval(countdownInterval);
                     isRunning = false;
-                    playAlarm();
+                    playAlarm(); // הפעלת הצלצול בלופ
                     showMessage('הזמן נגמר!', 'success');
                     stopButton.disabled = true;
                     return;
@@ -294,10 +217,12 @@
             hoursInput.disabled = false;
             minutesInput.disabled = false;
             secondsInput.disabled = false;
-            alarmSoundSelect.disabled = false;
-            digitFontSelect.disabled = false; // Enable font selection
-            document.querySelectorAll('.control-button').forEach(button => button.disabled = false);
             hideMessage();
+            if (alarmLoop) { // עצירת לולאת הצלצול
+                alarmLoop.stop();
+                alarmLoop.dispose();
+                alarmLoop = null;
+            }
         }
 
         // פונקציה לאיפוס הטיימר
@@ -315,24 +240,26 @@
             hoursInput.disabled = false;
             minutesInput.disabled = false;
             secondsInput.disabled = false;
-            alarmSoundSelect.disabled = false;
-            digitFontSelect.disabled = false; // Enable font selection
-            document.querySelectorAll('.control-button').forEach(button => button.disabled = false);
             hideMessage();
-            if (alarmAudio) {
-                alarmAudio.pause();
-                alarmAudio.currentTime = 0;
+            if (alarmLoop) { // עצירת לולאת הצלצול
+                alarmLoop.stop();
+                alarmLoop.dispose();
+                alarmLoop = null;
             }
         }
 
-        // פונקציה להפעלת צליל האזעקה
+        // פונקציה להפעלת צליל האזעקה בלופ
         function playAlarm() {
-            const selectedSound = alarmSoundSelect.value;
-            if (alarmSounds[selectedSound]) {
-                alarmSounds[selectedSound]();
-            } else {
-                console.error("צליל אזעקה לא נמצא:", selectedSound);
+            // אם לולאה כבר קיימת, עצור אותה וסלק משאבים
+            if (alarmLoop) {
+                alarmLoop.stop();
+                alarmLoop.dispose();
             }
+
+            // יצירת לולאה חדשה שמפעילה את sound5 כל שנייה (או בתדירות המתאימה למנגינה)
+            alarmLoop = new Tone.Loop((time) => {
+                alarmSounds.sound5(); // הפעלת מנגינה שמחה
+            }, "1s").start(0); // לולאה כל שנייה, מתחילה מיד
         }
 
         // מאזיני אירועים
@@ -343,38 +270,6 @@
         hoursInput.addEventListener('input', updateDisplayFromInput);
         minutesInput.addEventListener('input', updateDisplayFromInput);
         secondsInput.addEventListener('input', updateDisplayFromInput);
-
-        timeInputsContainer.addEventListener('click', (event) => {
-            const targetButton = event.target.closest('.control-button');
-            if (!targetButton || isRunning) return;
-
-            const action = targetButton.dataset.action;
-            const targetInputId = targetButton.dataset.target;
-            const inputElement = document.getElementById(targetInputId);
-
-            let currentValue = parseInt(inputElement.value) || 0;
-            const min = parseInt(inputElement.min) || 0;
-            const max = parseInt(inputElement.max) || (targetInputId === 'hoursInput' ? 99 : 59);
-
-            if (action === 'increment') {
-                currentValue++;
-                if (currentValue > max) {
-                    currentValue = min;
-                }
-            } else if (action === 'decrement') {
-                currentValue--;
-                if (currentValue < min) {
-                    currentValue = max;
-                }
-            }
-            inputElement.value = currentValue;
-            updateDisplayFromInput();
-        });
-
-        // New: Event listener for font selection
-        digitFontSelect.addEventListener('change', (event) => {
-            timerDisplay.style.fontFamily = event.target.value;
-        });
 
         function updateDisplayFromInput() {
             if (isRunning) return;
