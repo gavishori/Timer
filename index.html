@@ -6,12 +6,14 @@
     <title>טיימר עם צלצול</title>
     <!-- טעינת Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- טעינת גופן Assistant מ-Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* הגדרת גופן Inter כברירת מחדל */
+        /* הגדרת גופן Assistant כברירת מחדל */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Assistant', sans-serif;
         }
-        /* הסתרת חצים בשדות קלט מספריים */
+        /* הסתרת חצים בשדות קלט מספריים מובנים של הדפדפן */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -22,34 +24,46 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+<body class="bg-blue-50 min-h-screen flex items-center justify-center p-4">
 
-    <div class="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md text-center transform transition-all duration-300 hover:scale-105 border border-gray-100">
+    <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md text-center transform transition-all duration-300 hover:scale-105 border border-gray-100">
         <h1 class="text-4xl font-extrabold text-gray-700 mb-6">טיימר</h1>
 
         <!-- תצוגת הטיימר -->
-        <div id="timerDisplay" class="text-7xl font-mono text-gray-800 mb-8 bg-gray-100 p-8 rounded-2xl border-2 border-gray-200 shadow-inner">
+        <div id="timerDisplay" class="text-7xl font-mono text-gray-800 mb-6 bg-gray-100 p-6 rounded-2xl border-2 border-gray-200 shadow-inner">
             00:00:00
         </div>
 
-        <!-- קלט זמן -->
-        <div class="flex justify-center items-center space-x-4 mb-8">
+        <!-- קלט זמן עם חיצים -->
+        <div class="flex justify-center items-center space-x-4 mb-8" id="timeInputsContainer">
             <div class="flex flex-col items-center">
                 <label for="hoursInput" class="text-lg font-semibold text-gray-600 mb-2">שעות</label>
-                <input type="number" id="hoursInput" min="0" max="99" value="0"
-                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+                <div class="flex items-center space-x-2">
+                    <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-3 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300" data-action="decrement" data-target="hoursInput">-</button>
+                    <input type="number" id="hoursInput" min="0" max="99" value="0"
+                           class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+                    <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-3 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300" data-action="increment" data-target="hoursInput">+</button>
+                </div>
             </div>
             <div class="text-5xl font-bold text-gray-500">:</div>
             <div class="flex flex-col items-center">
                 <label for="minutesInput" class="text-lg font-semibold text-gray-600 mb-2">דקות</label>
-                <input type="number" id="minutesInput" min="0" max="59" value="0"
-                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+                <div class="flex items-center space-x-2">
+                    <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-3 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300" data-action="decrement" data-target="minutesInput">-</button>
+                    <input type="number" id="minutesInput" min="0" max="59" value="0"
+                           class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+                    <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-3 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300" data-action="increment" data-target="minutesInput">+</button>
+                </div>
             </div>
             <div class="text-5xl font-bold text-gray-500">:</div>
             <div class="flex flex-col items-center">
                 <label for="secondsInput" class="text-lg font-semibold text-gray-600 mb-2">שניות</label>
-                <input type="number" id="secondsInput" min="0" max="59" value="0"
-                       class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+                <div class="flex items-center space-x-2">
+                    <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-3 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300" data-action="decrement" data-target="secondsInput">-</button>
+                    <input type="number" id="secondsInput" min="0" max="59" value="0"
+                           class="w-24 p-3 text-3xl text-center border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200">
+                    <button class="control-button bg-indigo-200 hover:bg-indigo-300 text-indigo-800 font-bold py-2 px-3 rounded-full text-xl leading-none focus:outline-none focus:ring-2 focus:ring-indigo-300" data-action="increment" data-target="secondsInput">+</button>
+                </div>
             </div>
         </div>
 
@@ -100,6 +114,7 @@
         const resetButton = document.getElementById('resetButton');
         const alarmSoundSelect = document.getElementById('alarmSoundSelect');
         const messageBox = document.getElementById('messageBox');
+        const timeInputsContainer = document.getElementById('timeInputsContainer'); // New: container for time inputs and arrows
 
         // משתנים גלובליים לטיימר
         let countdownInterval;
@@ -216,6 +231,8 @@
             minutesInput.disabled = true;
             secondsInput.disabled = true;
             alarmSoundSelect.disabled = true;
+            // Disable arrow buttons when timer starts
+            document.querySelectorAll('.control-button').forEach(button => button.disabled = true);
             hideMessage(); // נקה הודעות קודמות
 
             countdownInterval = setInterval(() => {
@@ -243,6 +260,8 @@
             minutesInput.disabled = false;
             secondsInput.disabled = false;
             alarmSoundSelect.disabled = false;
+            // Enable arrow buttons when timer stops
+            document.querySelectorAll('.control-button').forEach(button => button.disabled = false);
             hideMessage();
         }
 
@@ -262,6 +281,8 @@
             minutesInput.disabled = false;
             secondsInput.disabled = false;
             alarmSoundSelect.disabled = false;
+            // Enable arrow buttons when timer resets
+            document.querySelectorAll('.control-button').forEach(button => button.disabled = false);
             hideMessage();
             if (alarmAudio) {
                 alarmAudio.pause();
@@ -292,6 +313,35 @@
         minutesInput.addEventListener('input', updateDisplayFromInput);
         secondsInput.addEventListener('input', updateDisplayFromInput);
 
+        // New: Event listener for arrow buttons
+        timeInputsContainer.addEventListener('click', (event) => {
+            const targetButton = event.target.closest('.control-button');
+            if (!targetButton || isRunning) return; // Only act if a control button is clicked and timer is not running
+
+            const action = targetButton.dataset.action;
+            const targetInputId = targetButton.dataset.target;
+            const inputElement = document.getElementById(targetInputId);
+
+            let currentValue = parseInt(inputElement.value) || 0;
+            const min = parseInt(inputElement.min) || 0;
+            const max = parseInt(inputElement.max) || (targetInputId === 'hoursInput' ? 99 : 59); // Default max for hours/minutes/seconds
+
+            if (action === 'increment') {
+                currentValue++;
+                if (currentValue > max) {
+                    currentValue = min; // Wrap around to min if max is exceeded
+                }
+            } else if (action === 'decrement') {
+                currentValue--;
+                if (currentValue < min) {
+                    currentValue = max; // Wrap around to max if min is exceeded
+                }
+            }
+            inputElement.value = currentValue;
+            updateDisplayFromInput(); // Update display after changing input value
+        });
+
+
         function updateDisplayFromInput() {
             if (isRunning) return; // אל תעדכן אם הטיימר פועל
             const hours = parseInt(hoursInput.value) || 0;
@@ -303,18 +353,27 @@
                 `${String(seconds).padStart(2, '0')}`;
         }
 
-        // ודא שהקלט תמיד מספר חיובי
+        // ודא שהקלט תמיד מספר חיובי ובטווח
         hoursInput.addEventListener('change', (e) => {
-            if (e.target.value < 0) e.target.value = 0;
-            if (e.target.value > 99) e.target.value = 99;
+            let val = parseInt(e.target.value) || 0;
+            if (val < 0) val = 0;
+            if (val > 99) val = 99;
+            e.target.value = val;
+            updateDisplayFromInput();
         });
         minutesInput.addEventListener('change', (e) => {
-            if (e.target.value < 0) e.target.value = 0;
-            if (e.target.value > 59) e.target.value = 59;
+            let val = parseInt(e.target.value) || 0;
+            if (val < 0) val = 0;
+            if (val > 59) val = 59;
+            e.target.value = val;
+            updateDisplayFromInput();
         });
         secondsInput.addEventListener('change', (e) => {
-            if (e.target.value < 0) e.target.value = 0;
-            if (e.target.value > 59) e.target.value = 59;
+            let val = parseInt(e.target.value) || 0;
+            if (val < 0) val = 0;
+            if (val > 59) val = 59;
+            e.target.value = val;
+            updateDisplayFromInput();
         });
 
         // אתחל תצוגה ראשונית
