@@ -6,10 +6,27 @@
     <title>טיימר עם צלצול</title>
     <!-- טעינת Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- טעינת גופן Assistant מ-Google Fonts -->
+    <!-- טעינת גופנים מ-Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oxygen+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
-        /* הגדרת גופן Assistant כברירת מחדל */
+        /* הגדרת גופן Assistant כברירת מחדל לטקסט כללי */
         body {
             font-family: 'Assistant', sans-serif;
         }
@@ -22,6 +39,10 @@
         input[type="number"] {
             -moz-appearance: textfield;
         }
+        /* גופן ברירת מחדל לספרות הטיימר (ניתן לשינוי באמצעות JS) */
+        #timerDisplay {
+            font-family: 'Space Mono', monospace; /* Default font for digits */
+        }
     </style>
 </head>
 <body class="bg-blue-50 min-h-screen flex items-center justify-center p-4">
@@ -30,7 +51,7 @@
         <h1 class="text-4xl font-extrabold text-gray-700 mb-6">טיימר</h1>
 
         <!-- תצוגת הטיימר -->
-        <div id="timerDisplay" class="text-7xl md:text-8xl font-mono text-gray-800 mb-6 bg-gray-100 p-6 md:p-8 rounded-2xl border-2 border-gray-200 shadow-inner">
+        <div id="timerDisplay" class="text-7xl md:text-8xl text-gray-800 mb-6 bg-gray-100 p-6 md:p-8 rounded-2xl border-2 border-gray-200 shadow-inner">
             00:00:00
         </div>
 
@@ -74,6 +95,30 @@
             </select>
         </div>
 
+        <!-- בחירת גופן לספרות הטיימר -->
+        <div class="mb-8">
+            <label for="digitFontSelect" class="block text-lg font-semibold text-gray-600 mb-3">בחר גופן לספרות הטיימר:</label>
+            <select id="digitFontSelect"
+                    class="w-full p-3 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 transition duration-200 bg-white shadow-sm">
+                <option value="'Space Mono', monospace">Space Mono (ברירת מחדל)</option>
+                <option value="'Roboto Mono', monospace">Roboto Mono</option>
+                <option value="'Open Sans Mono', monospace">Open Sans Mono</option>
+                <option value="'Fira Code', monospace">Fira Code</option>
+                <option value="'Inconsolata', monospace">Inconsolata</option>
+                <option value="'IBM Plex Mono', monospace">IBM Plex Mono</option>
+                <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                <option value="'Anonymous Pro', monospace">Anonymous Pro</option>
+                <option value="'Cutive Mono', monospace">Cutive Mono</option>
+                <option value="'Fragment Mono', monospace">Fragment Mono</option>
+                <option value="'DM Mono', monospace">DM Mono</option>
+                <option value="'Red Hat Mono', monospace">Red Hat Mono</option>
+                <option value="'Spline Sans Mono', monospace">Spline Sans Mono</option>
+                <option value="'Oxygen Mono', monospace">Oxygen Mono</option>
+                <option value="'Share Tech Mono', monospace">Share Tech Mono</option>
+            </select>
+        </div>
+
         <!-- כפתורי שליטה -->
         <div class="flex justify-center space-x-4">
             <button id="startButton"
@@ -107,19 +152,17 @@
         const stopButton = document.getElementById('stopButton');
         const resetButton = document.getElementById('resetButton');
         const alarmSoundSelect = document.getElementById('alarmSoundSelect');
+        const digitFontSelect = document.getElementById('digitFontSelect'); // New: Font selection dropdown
         const messageBox = document.getElementById('messageBox');
-        const timeInputsContainer = document.getElementById('timeInputsContainer'); // New: container for time inputs and arrows
+        const timeInputsContainer = document.getElementById('timeInputsContainer');
 
         // משתנים גלובליים לטיימר
         let countdownInterval;
         let totalSeconds = 0;
         let isRunning = false;
-        let alarmAudio; // אובייקט Audio עבור הצלצול
+        let alarmAudio;
 
-        // אובייקטים של צלילי אזעקה (באופן אידיאלי, אלה יהיו קבצי אודיו אמיתיים)
-        // לצורך הדגמה, נשתמש ב-Tone.js ליצירת צלילים פשוטים.
-        // ביישום אמיתי, היית טוען קבצי .mp3 או .wav.
-        // כאן אנו משתמשים ב-Tone.js כדי למנוע צורך בכתובות URL חיצוניות לקבצי אודיו.
+        // אובייקטים של צלילי אזעקה (Tone.js)
         const alarmSounds = {
             sound1: () => { // צלצול קלאסי
                 const synth = new Tone.Synth().toDestination();
@@ -193,18 +236,16 @@
 
         // פונקציה להפעלת הטיימר
         async function startTimer() {
-            if (isRunning) return; // מונע הפעלה כפולה
+            if (isRunning) return;
 
-            // ודא ש-Tone.js נטען לפני הפעלת צלילים
             if (typeof Tone === 'undefined') {
                 showMessage('טוען ספריות אודיו...', 'info');
                 await loadToneJs();
-                await Tone.start(); // הפעלת הקונטקסט של האודיו
+                await Tone.start();
                 hideMessage();
             } else if (Tone.context.state !== 'running') {
                 await Tone.start();
             }
-
 
             const hours = parseInt(hoursInput.value) || 0;
             const minutes = parseInt(minutesInput.value) || 0;
@@ -225,9 +266,9 @@
             minutesInput.disabled = true;
             secondsInput.disabled = true;
             alarmSoundSelect.disabled = true;
-            // Disable arrow buttons when timer starts
+            digitFontSelect.disabled = true; // Disable font selection
             document.querySelectorAll('.control-button').forEach(button => button.disabled = true);
-            hideMessage(); // נקה הודעות קודמות
+            hideMessage();
 
             countdownInterval = setInterval(() => {
                 if (totalSeconds <= 0) {
@@ -235,7 +276,7 @@
                     isRunning = false;
                     playAlarm();
                     showMessage('הזמן נגמר!', 'success');
-                    stopButton.disabled = true; // עצור את כפתור העצירה לאחר שהטיימר הסתיים
+                    stopButton.disabled = true;
                     return;
                 }
                 totalSeconds--;
@@ -254,7 +295,7 @@
             minutesInput.disabled = false;
             secondsInput.disabled = false;
             alarmSoundSelect.disabled = false;
-            // Enable arrow buttons when timer stops
+            digitFontSelect.disabled = false; // Enable font selection
             document.querySelectorAll('.control-button').forEach(button => button.disabled = false);
             hideMessage();
         }
@@ -275,7 +316,7 @@
             minutesInput.disabled = false;
             secondsInput.disabled = false;
             alarmSoundSelect.disabled = false;
-            // Enable arrow buttons when timer resets
+            digitFontSelect.disabled = false; // Enable font selection
             document.querySelectorAll('.control-button').forEach(button => button.disabled = false);
             hideMessage();
             if (alarmAudio) {
@@ -288,9 +329,6 @@
         function playAlarm() {
             const selectedSound = alarmSoundSelect.value;
             if (alarmSounds[selectedSound]) {
-                // Tone.js requires a user interaction to start its audio context
-                // This is handled in startTimer, but if playAlarm is called directly,
-                // ensure Tone.start() is called first.
                 alarmSounds[selectedSound]();
             } else {
                 console.error("צליל אזעקה לא נמצא:", selectedSound);
@@ -302,15 +340,13 @@
         stopButton.addEventListener('click', stopTimer);
         resetButton.addEventListener('click', resetTimer);
 
-        // עדכון תצוגת הטיימר כאשר המשתמש משנה את הקלט
         hoursInput.addEventListener('input', updateDisplayFromInput);
         minutesInput.addEventListener('input', updateDisplayFromInput);
         secondsInput.addEventListener('input', updateDisplayFromInput);
 
-        // New: Event listener for arrow buttons
         timeInputsContainer.addEventListener('click', (event) => {
             const targetButton = event.target.closest('.control-button');
-            if (!targetButton || isRunning) return; // Only act if a control button is clicked and timer is not running
+            if (!targetButton || isRunning) return;
 
             const action = targetButton.dataset.action;
             const targetInputId = targetButton.dataset.target;
@@ -318,26 +354,30 @@
 
             let currentValue = parseInt(inputElement.value) || 0;
             const min = parseInt(inputElement.min) || 0;
-            const max = parseInt(inputElement.max) || (targetInputId === 'hoursInput' ? 99 : 59); // Default max for hours/minutes/seconds
+            const max = parseInt(inputElement.max) || (targetInputId === 'hoursInput' ? 99 : 59);
 
             if (action === 'increment') {
                 currentValue++;
                 if (currentValue > max) {
-                    currentValue = min; // Wrap around to min if max is exceeded
+                    currentValue = min;
                 }
             } else if (action === 'decrement') {
                 currentValue--;
                 if (currentValue < min) {
-                    currentValue = max; // Wrap around to max if min is exceeded
+                    currentValue = max;
                 }
             }
             inputElement.value = currentValue;
-            updateDisplayFromInput(); // Update display after changing input value
+            updateDisplayFromInput();
         });
 
+        // New: Event listener for font selection
+        digitFontSelect.addEventListener('change', (event) => {
+            timerDisplay.style.fontFamily = event.target.value;
+        });
 
         function updateDisplayFromInput() {
-            if (isRunning) return; // אל תעדכן אם הטיימר פועל
+            if (isRunning) return;
             const hours = parseInt(hoursInput.value) || 0;
             const minutes = parseInt(minutesInput.value) || 0;
             const seconds = parseInt(secondsInput.value) || 0;
@@ -347,7 +387,6 @@
                 `${String(seconds).padStart(2, '0')}`;
         }
 
-        // ודא שהקלט תמיד מספר חיובי ובטווח
         hoursInput.addEventListener('change', (e) => {
             let val = parseInt(e.target.value) || 0;
             if (val < 0) val = 0;
