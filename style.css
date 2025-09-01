@@ -1,0 +1,941 @@
+/* Base theme */
+:root{
+  --bg: #0f1216;
+  --panel: #151a21;
+  --card: #1a2029;
+  --text: #e6eaf2;
+  --muted: #9aa5b1;
+  --primary: #5b8cff;
+  --primary-600: #3f73ff;
+  --danger: #ff5b6e;
+  --ok: #35d49a;
+  --border: #2a3340;
+  --shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+:root.light{
+  --bg: #f7f8fb;
+  --panel: #ffffff;
+  --card: #ffffff;
+  --text: #141a22;
+  --muted: #5c6670;
+  --primary: #2258ff;
+  --primary-600: #1b4ae0;
+  --danger: #e03148;
+  --ok: #0ea86b;
+  --border: #e8ecf2;
+  --shadow: 0 10px 30px rgba(0,0,0,0.07);
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  font-family: 'Rubik', system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.app-header, .app-footer{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 18px;
+  background: var(--panel);
+  border-bottom:1px solid var(--border);
+  position: sticky; top:0; z-index:50;
+}
+.app-footer{
+  border-top:1px solid var(--border);
+  border-bottom:none;
+  bottom:0; top:auto; position: sticky;
+}
+
+.brand{ display:flex; align-items:center; gap:10px; }
+.brand .logo{ font-size:22px; }
+.brand h1{ font-size:18px; margin:0; }
+
+main{ padding:16px; max-width:1200px; margin:0 auto; }
+
+.view{ display:none; }
+.view.active{ display:block; }
+
+.toolbar{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  flex-wrap: wrap;
+  margin-bottom:10px;
+}
+.toolbar h2{ margin:0; }
+.toolbar-actions {
+  display: flex;
+  flex-grow: 1;
+}
+#tripSearch {
+  width: 100%;
+}
+
+.cards{ list-style:none; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+.cards li{
+  background: var(--card);
+  border:1px solid var(--border); border-radius:14px; box-shadow: var(--shadow);
+  padding:14px; display:flex; flex-direction:column; gap:8px;
+  /* Added for consistent layout */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: auto;
+}
+
+.cards .trip-title{ font-weight:600; }
+.cards .muted{ font-size:12px; color: var(--muted); }
+.cards .row{ display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap: wrap; }
+.cards .row.bottom-row {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+.cards .row .btn {
+  flex-grow: 1;
+  width: auto;
+}
+
+.fab{
+  position: fixed; bottom:90px; inset-inline-end:24px;
+  background: var(--primary); color:#fff; border:none; border-radius:50%;
+  width:56px; height:56px; font-size:26px; cursor:pointer; box-shadow: var(--shadow);
+  z-index: 100;
+}
+
+.btn{
+  appearance:none; border:none; border-radius:12px; padding:10px 14px; cursor:pointer;
+  background: var(--card); color: var(--text); border:1px solid var(--border);
+}
+.btn.primary{ background: var(--primary); color:#fff; border-color:transparent; }
+.btn.ghost{ background: transparent; }
+
+
+
+.input, select.input, textarea.input{
+  width:100%; padding:10px 12px; border-radius:12px;
+  background: var(--panel); border:1px solid var(--border); color: var(--text);
+}
+.input:focus{ outline:2px solid var(--primary-600); }
+
+/* New styles for the layout changes */
+.two-row-label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.two-row-label .input {
+  grid-column: 1 / span 2;
+}
+.two-row-label .btn {
+  align-self: end;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.checkbox-group label:has(input:checked) {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+.checkbox-group input[type="checkbox"] {
+  display: none;
+}
+
+
+.breadcrumbs{
+  display:flex; align-items:center; justify-content:space-between;
+  margin:8px 0 14px;
+  flex-wrap: wrap;
+}
+.breadcrumbs h2{ margin:0; flex:1; }
+
+.share-controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+.tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.tab{ padding:8px 12px; border-radius:12px; border:1px solid var(--border); background: var(--panel); cursor:pointer; }
+.tabs .tab {
+  color: #fff;
+}
+
+/* Fix for light mode to show tab text */
+:root.light .tabs .tab {
+  color: var(--text);
+}
+
+:root.light .tabs .tab.active{
+  color: #fff;
+}
+
+.tab.active{ background: var(--primary); color:#fff; border-color:transparent; }
+
+.panel{ display:none; }
+.panel.active{ display:block; }
+
+.tab-panels {
+  overflow-y: hidden;
+  height: auto;
+}
+
+.card{
+  background: var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:16px; box-shadow: var(--shadow);
+  margin-bottom:12px;
+}
+.budget-card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(min-content, max-content);
+    gap: 10px;
+    align-items: center;
+    padding-bottom: 20px;
+}
+.budget-card-grid h3 {
+    grid-column: 1 / span 4;
+    margin: 0;
+}
+.budget-row {
+    grid-column: 1 / span 4;
+    display: contents;
+}
+.budget-label {
+    font-weight: 500;
+    font-size: 14px;
+    grid-column: 1 / 2;
+    align-self: center;
+}
+.currency-cell {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    align-self: center;
+}
+
+/* Added style for negative value to be red */
+.currency-cell.negative {
+    color: var(--danger);
+}
+
+.form.compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  height: auto;
+}
+.form.compact .form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+@media (min-width: 768px) {
+    .form.compact .form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+.form.compact .form-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.form.compact .form-col label {
+    margin-bottom: 0;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.input-with-button .input {
+  flex: 1;
+}
+
+.two-column-input {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.currency-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.currency-inputs .input {
+  width: auto;
+}
+
+
+.muted{ color: var(--muted); font-size: 12px; }
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.table{ width:100%; border-collapse: collapse; }
+.table th, .table td{ padding:10px; border-bottom:1px solid var(--border); text-align:right; }
+.table tbody tr:hover{ background: rgba(255,255,255,0.02); }
+.table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.table-actions h3 {
+  margin: 0;
+}
+.table .row-actions{ display:flex; gap:6px; }
+
+.stat .label{ color: var(--muted); font-size:12px; }
+.stat .value{ font-weight:700; margin-top:4px; }
+.value.negative{ color: var(--danger); }
+
+.list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+.list li{ padding:12px; border:1px solid var(--border); border-radius:12px; background: var(--panel); }
+
+.map{ width:100%; height:280px; border-radius:12px; border:1px solid var(--border); }
+.map.tall{ height:420px; }
+
+.dialog::backdrop{ background: rgba(0,0,0,0.45); }
+.dialog{
+  border:none;
+  padding:0;
+  border-radius:16px;
+  width:min(980px, 96vw);
+  height:92vh;
+  max-height:92vh;
+  overflow:hidden; /* no internal scroll */
+}
+.dialog .form{ padding:16px; }
+.dialog-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.dialog-actions-row .input-with-button {
+  flex-grow: 1;
+}
+
+/* Footer */
+.app-footer{ color: var(--muted); font-size:12px; }
+
+/* Badges */
+.badge{
+  display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px;
+  border:1px solid var(--border); background: var(--panel); font-size:12px;
+}
+.badge.ok{ border-color: transparent; background: rgba(53,212,154,0.12); color: #b3ffe4; }
+.badge.bad{ border-color: transparent; background: rgba(224,49,72,0.12); color: #ffd7dc; }
+
+/* Utilities */
+.hidden{ display:none !important; }
+
+/* Mobile specific fixes */
+@media (max-width: 600px) {
+  .breadcrumbs {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .share-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  .share-controls button, .share-controls select {
+    width: 100%;
+  }
+  .share-controls label {
+    align-self: flex-start;
+  }
+  .tabs {
+    flex-direction: column;
+  }
+  .tab {
+    width: 100%;
+    text-align: center;
+  }
+  .table {
+    font-size: 12px;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .table th, .table td {
+    padding: 8px;
+  }
+  .row {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .two.flat {
+    grid-template-columns: 1fr;
+  }
+  .two.flat button, .two.flat input {
+    width: 100%;
+  }
+  .cards .row {
+    flex-direction: column;
+    align-items: center;
+  }
+  .cards .row .btn {
+    width: 100%;
+  }
+
+  .dialog{
+  border:none;
+  padding:0;
+  border-radius:16px;
+  width:min(980px, 96vw);
+  height:92vh;
+  max-height:92vh;
+  overflow:hidden; /* no internal scroll */
+}
+  .dialog.wide .form{
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  
+}
+
+/* New CSS rule to fix the layout in the expense dialog */
+.form-actions-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.form-actions-inline .form-actions {
+  margin: 0;
+}
+.form-actions-inline .spacer {
+  flex-grow: 1;
+}
+
+/* Ensure buttons in dialogs align in a single row */
+.dialog .form-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.dialog .form-actions button {
+  flex: none;
+}
+
+
+/* Fix for light mode button text */
+:root.light .btn {
+    color: var(--text);
+    border-color: var(--border);
+}
+:root.light .btn.primary {
+    color: #fff;
+    border-color: transparent;
+}
+:root.light .btn.ghost {
+    color: var(--muted);
+    border-color: transparent;
+}
+
+
+/* Fix for disabled buttons in light mode */
+:root.light button:disabled, :root.light button[disabled]{
+    color: var(--muted);
+    border-color: var(--border);
+    background: var(--panel);
+    opacity: 0.7;
+}
+
+/* שורת פעולות בתוך חלון ההוצאה */
+.actions-inline{
+  display: grid;
+  grid-template-columns: 1fr auto auto; /* שדה מטבע | בחר מיקום | שמור/ביטול */
+  gap: 10px;
+  align-items: end;
+  margin-top: 6px;
+}
+
+.actions-inline label { margin: 0; }
+
+.actions-inline .actions-right{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+
+/* --- Patch: Location dialog without scrollbar (fits in one screen) --- */
+#locationDialog.dialog.wide{ width:min(1100px, 98vw); height:92vh; max-height:92vh; }
+
+/* Reduce location map height so save/cancel are visible without scrolling */
+#locationDialog #locationMap.map.tall {
+  height: clamp(340px, 50vh, 530px);
+  max-height: 55vh;
+}
+
+
+
+/* --- Patch: Better button colors in expense dialog --- */
+#expenseDialog .btn.ghost {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+#expenseDialog #pickLocationBtn.btn.ghost {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+
+
+/* --- Patch: clearer buttons in expense dialog --- */
+#expenseDialog .btn.ghost {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* Make 'pick location' stand out as primary */
+#expenseDialog #pickLocationBtn.btn.ghost {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+
+
+/* Unsaved dialog */
+dialog#unsavedDialog::backdrop { background: rgba(0,0,0,.45); }
+.unsaved-modal { min-width: 320px; padding: 16px; color: var(--text); background: var(--bg-elev); border-radius: 16px; }
+.unsaved-modal h3 { margin: 0 0 8px; font-size: 1.2rem; }
+.unsaved-modal p { margin: 0 0 12px; opacity: .9; }
+.unsaved-modal menu { display:flex; gap:8px; justify-content:flex-end; margin:0; padding:0; }
+.unsaved-modal .btn { padding:8px 12px; border-radius: 999px; }
+
+
+/* Expense dialog two-column layout: map on the left, form on the right */
+.expense-dialog-grid{
+  display:grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap:16px;
+  align-items:start;
+  height: calc(95vh - 120px); /* fits inside dialog minus header/actions */
+}
+.expense-dialog-grid .map-side, .expense-dialog-grid .form-side{
+  display:flex; flex-direction:column; gap:12px;
+  height:100%;
+}
+.expense-dialog-grid .map-side .map{ flex:1; }
+.dialog .dialog-actions-row.tight{ margin-bottom:8px; }
+@media (max-width: 900px){
+  .expense-dialog-grid{ grid-template-columns: 1fr; height:auto; }
+  .expense-dialog-grid .map-side .map{ height: 50vh; }
+}
+
+
+.map.shorter{ height: 50vh; } /* shrink map to half screen so dialog fits without scroll */
+.expense-dialog-grid{ height: auto; max-height: none; }
+.dialog.wide{ width:min(1100px, 98vw); height:92vh; max-height:92vh; }
+
+
+/* compact header paddings inside dialog */
+.dialog .form{ padding:14px 16px; }
+.expense-dialog-grid{
+  display:grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap:14px;
+  align-items:start;
+  height: calc(92vh - 140px);
+}
+.row-wrap{ display:flex; align-items:center; gap:10px; }
+.hint{ color: var(--muted); font-size:12px; }
+.controls-row{ display:flex; gap:10px; align-items:center; width:100%; }
+.controls-row .grow{ flex:1; }
+.expense-dialog-grid .map-side, .expense-dialog-grid .form-side{ display:flex; flex-direction:column; gap:10px; height:100%; }
+.expense-dialog-grid .map-side .map{ flex:1; }
+@media (max-width: 900px){
+  .expense-dialog-grid{ grid-template-columns:1fr; height:auto; }
+  .expense-dialog-grid .map-side .map{ height:50vh; }
+}
+
+@media (max-width: 600px){
+  .two{ grid-template-columns:1fr; }
+}
+
+
+/* Force date+time inline in edit expense */
+#expDateTimeRow.two{
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px;
+  align-items: end;
+}
+#expDateTimeRow.two label{ display:flex; flex-direction:column; gap:6px; }
+@media (max-width: 700px){
+  #expDateTimeRow.two{ grid-template-columns: 1fr !important; }
+}
+
+/* inline date+time in expenses table */
+.expense-datetime{ display:flex; flex-direction:row; gap:6px; white-space:nowrap; justify-content:flex-end; align-items:center; }
+.expense-datetime .time{ order:1; }
+.expense-datetime .date{ order:2; }
+
+/* FIXES FOR JOURNAL DIALOG */
+.journal-dialog-grid{
+  display:grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap:14px;
+  align-items:start;
+  height: calc(92vh - 140px);
+}
+.journal-dialog-grid .map-side, .journal-dialog-grid .form-side{ 
+  display:flex; flex-direction:column; gap:10px; height:100%;
+}
+.journal-dialog-grid .map-side .map{ flex:1; }
+
+@media (max-width: 900px){
+  .journal-dialog-grid{ grid-template-columns:1fr; height:auto; }
+  .journal-dialog-grid .map-side .map{ height:50vh; }
+}
+
+.journal-dialog-grid .form-side label{ flex:1; display:flex; flex-direction:column; }
+.journal-dialog-grid .form-side textarea{ flex:1; }
+
+
+/* === Force Journal date/time in a 2-col grid, desktop & mobile === */
+#journalDateTimeRow.two{
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+#journalDateTimeRow.two label{ margin:0; }
+#journalDateTimeRow.two .input{ width:100%; }
+
+/* Keep EXPENSE dialog layout working as 2-col grid */
+#expDateTimeRow.two{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+
+
+/* --- Link icon button --- */
+.link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+.link-icon:hover {
+  background: var(--primary-600);
+}
+
+
+/* --- Link icon light/dark adjustments --- */
+:root.light .link-icon {
+  background: var(--primary-600);
+  color: #fff;
+}
+:root.light .link-icon:hover {
+  background: var(--primary);
+}
+
+:root .link-icon {
+  background: var(--primary);
+  color: #fff;
+}
+:root .link-icon:hover {
+  background: var(--primary-600);
+}
+
+
+/* --- Overview Meta: unified typography (font size + line height) --- */
+#tab-overview #overviewMeta { 
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#tab-overview #overviewMeta > div,
+#tab-overview #tripBudgetILSDisplay {
+  font-size: 20px;
+  line-height: 1.9;
+  color: var(--text);
+}
+
+/* Keep label weight consistent */
+#tab-overview #overviewMeta strong {
+  font-weight: 700;
+}
+
+/* Slight spacing above budget line to match rhythm */
+#tab-overview #tripBudgetILSDisplay {
+  margin-top: 6px;
+}
+@media (max-width: 600px){
+  #tab-overview #overviewMeta > div,
+  #tab-overview #tripBudgetILSDisplay {
+    font-size: 18px;
+    line-height: 1.8;
+  }
+}
+
+
+/* עמודת תיאור רחבה יותר בטבלת הוצאות */
+#expenseTable th:nth-child(1),
+#expenseTable td:nth-child(1) {
+  width: 40%;
+}
+#expenseTable th:nth-child(2),
+#expenseTable td:nth-child(2) {
+  width: 15%;
+}
+#expenseTable th:nth-child(3),
+#expenseTable td:nth-child(3) {
+  width: 10%;
+}
+#expenseTable th:nth-child(4),
+#expenseTable td:nth-child(4) {
+  width: 10%;
+}
+#expenseTable th:nth-child(5),
+#expenseTable td:nth-child(5) {
+  width: 15%;
+}
+#expenseTable th:nth-child(6),
+#expenseTable td:nth-child(6) {
+  width: 10%;
+}
+
+
+/* splash */
+
+:root{
+  --bg:#0b0f14; --text:#e8ecf3; --muted:#a6b0bb; --primary:#7c3aed; --accent:#22d3ee;
+  --border:rgba(255,255,255,0.16); --card:rgba(17,23,34,0.55); --blur:16px;
+}
+:root.light{
+  --bg:#f7f9fc; --text:#0f172a; --muted:#5b6673; --primary:#7c3aed; --accent:#0891b2;
+  --border:rgba(0,0,0,0.08); --card:rgba(255,255,255,0.8); --blur:12px;
+}
+body.splash-mode{margin:0;font-family:'Rubik',sans-serif;background:var(--bg);color:var(--text);}
+.bg-ornaments{position:fixed; inset:0; pointer-events:none; z-index:0;
+  background: radial-gradient(1200px 600px at 110% -10%, rgba(124,58,237,0.23), transparent 60%),
+              radial-gradient(900px 520px at -10% 120%, rgba(34,211,238,0.20), transparent 60%);}
+#splash{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;}
+.splash-card{width:min(880px,92vw); padding:40px 32px; text-align:center; background:var(--card); border:1px solid var(--border);
+  border-radius:32px; backdrop-filter:blur(var(--blur)); box-shadow:0 24px 60px rgba(0,0,0,0.45);}
+.splash-logo{width:260px; margin:0 auto 18px; display:block;}
+.brand-title{margin:0; font-size:46px; font-weight:700;}
+.tagline{margin:8px 0 20px; font-size:19px; color:var(--muted);}
+.cta-row{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+.btn{padding:12px 20px; border-radius:999px; border:none; cursor:pointer; font-size:18px;}
+.btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent)); color:#fff;}
+#app{display:none;} .entered #app{display:block;} .entered #splash, .entered .bg-ornaments{display:none;}
+@media (max-width:520px){ .cta-row .btn{width:100%} }
+
+
+
+/* === Journal v11: H=68%, K=8%, L=4%, M=20% === */
+#tab-journal #journalTable { table-layout: fixed; width: 100%; }
+
+/* H = 68% (תיאור) */
+#tab-journal #journalTable th:nth-child(1),
+#tab-journal #journalTable td:nth-child(1) {
+  width: 68%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* K = 8% (מקום) */
+#tab-journal #journalTable th:nth-child(2),
+#tab-journal #journalTable td:nth-child(2) {
+  width: 8%;
+}
+
+/* L = 4% (זמן) */
+#tab-journal #journalTable th:nth-child(3),
+#tab-journal #journalTable td:nth-child(3) {
+  width: 4%;
+  text-align: center;
+}
+
+/* M = 20% (פעולות) */
+#tab-journal #journalTable th:nth-child(4),
+#tab-journal #journalTable td:nth-child(4) {
+  width: 20%;
+  text-align: left;
+  padding-left: 0;
+}
+
+
+/* === Journal v12: H=64%, K=10%, L=6%, M=20% === */
+#tab-journal #journalTable { table-layout: fixed; width: 100%; }
+
+/* H = 64% (תיאור) */
+#tab-journal #journalTable th:nth-child(1),
+#tab-journal #journalTable td:nth-child(1) {
+  width: 64%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* K = 10% (מקום) */
+#tab-journal #journalTable th:nth-child(2),
+#tab-journal #journalTable td:nth-child(2) {
+  width: 10%;
+}
+
+/* L = 6% (זמן) */
+#tab-journal #journalTable th:nth-child(3),
+#tab-journal #journalTable td:nth-child(3) {
+  width: 6%;
+  text-align: center;
+}
+
+/* M = 20% (פעולות) */
+#tab-journal #journalTable th:nth-child(4),
+#tab-journal #journalTable td:nth-child(4) {
+  width: 20%;
+  text-align: left;
+  padding-left: 0;
+}
+
+
+/* === Journal v13: H=60%, K=12%, L=8%, M=20% === */
+#tab-journal #journalTable { table-layout: fixed; width: 100%; }
+
+/* H = 60% (תיאור) */
+#tab-journal #journalTable th:nth-child(1),
+#tab-journal #journalTable td:nth-child(1) {
+  width: 60%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* K = 12% (מקום) */
+#tab-journal #journalTable th:nth-child(2),
+#tab-journal #journalTable td:nth-child(2) {
+  width: 12%;
+}
+
+/* L = 8% (זמן) */
+#tab-journal #journalTable th:nth-child(3),
+#tab-journal #journalTable td:nth-child(3) {
+  width: 8%;
+  text-align: center;
+}
+
+/* M = 20% (פעולות) */
+#tab-journal #journalTable th:nth-child(4),
+#tab-journal #journalTable td:nth-child(4) {
+  width: 20%;
+  text-align: left;
+  padding-left: 0;
+}
+
+
+/* === Journal v14: H=54%, K=16%, L=8%, M=20% === */
+#tab-journal #journalTable { table-layout: fixed; width: 100%; }
+
+/* H = 54% (תיאור) */
+#tab-journal #journalTable th:nth-child(1),
+#tab-journal #journalTable td:nth-child(1) {
+  width: 54%;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* K = 16% (מקום) */
+#tab-journal #journalTable th:nth-child(2),
+#tab-journal #journalTable td:nth-child(2) {
+  width: 16%;
+}
+
+/* L = 8% (זמן) */
+#tab-journal #journalTable th:nth-child(3),
+#tab-journal #journalTable td:nth-child(3) {
+  width: 8%;
+  text-align: center;
+}
+
+/* M = 20% (פעולות) */
+#tab-journal #journalTable th:nth-child(4),
+#tab-journal #journalTable td:nth-child(4) {
+  width: 20%;
+  text-align: left;
+  padding-left: 0;
+}
+
+
+:root {
+  --btn-primary-dark: #4a6edb;
+  --btn-secondary-dark: #6c63ff;
+}
+
+:root.light {
+  --btn-primary-light: #5b8cff;
+  --btn-secondary-light: #7a73e6;
+}
+
+.btn.danger {
+  background: var(--btn-primary-dark);
+  color: #fff;
+  border-color: transparent;
+}
+:root.light .btn.danger {
+  background: var(--btn-primary-light);
+}
+
+.btn.edit-btn {
+  background: var(--btn-secondary-dark);
+  color: #fff;
+  border-color: transparent;
+}
+:root.light .btn.edit-btn {
+  background: var(--btn-secondary-light);
+}
