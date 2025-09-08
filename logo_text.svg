@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="420" viewBox="0 0 1600 420">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@800&family=League+Spartan:wght@800&display=swap');
+      .latin { font: 800 132px 'League Spartan', Arial, sans-serif; fill: #ffffff; letter-spacing: 3px;}
+      .he { font: 800 96px 'Heebo', Arial, sans-serif; fill: #ffffff;}
+    </style>
+  </defs>
+  <!-- Transparent background -->
+  <rect width="100%" height="100%" fill="none"/>
+  <!-- Texts positioned to look like the reference: LATIN to the left, Hebrew to the right -->
+  <text class="latin" x="690" y="255">Z1V</text>
+  <text class="he" x="860" y="260" direction="rtl">צאנל שנאל</text>
+</svg>
