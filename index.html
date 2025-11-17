@@ -40,9 +40,27 @@
             color: #2196F3; /* כחול בהיר */
             margin-top: 0;
             margin-bottom: 25px;
-            font-size: 1.8rem;
+            font-size: 1.8rem; /* גודל פונט נשאר עבור הכותרת הכוללת */
             flex-shrink: 0;
+            display: flex; /* כדי למרכז את הלוגו והטקסט בתוך ה-h1 */
+            flex-direction: column;
+            align-items: center;
         }
+
+        /* עיצוב הלוגו בתוך הכותרת */
+        .logo-image {
+            height: 80px; /* גובה הלוגו, לתפוס בערך "שתי שורות" */
+            width: auto; /* שמירה על פרופורציות */
+            margin-bottom: 10px; /* רווח קטן מתחת ללוגו */
+        }
+
+        /* עיצוב הכיתוב שמתחת ללוגו */
+        .logo-text {
+            font-size: 1.2rem; /* גודל פונט לכיתוב */
+            font-weight: 600;
+            color: #424242; /* צבע כהה יותר, ניתן לשנות */
+        }
+
 
         .clock-list {
             display: flex;
@@ -150,13 +168,16 @@
 <body>
 
     <div class="container">
-        <h1>🌎 Flymily - פזורים בעולם, מאוחדים בלב</h1>
+        <h1>
+            <img src="https://i.imgur.com/uG9XJtY.png" alt="Flymily Logo" class="logo-image">
+            <span class="logo-text">פזורים בעולם, מאוחדים בלב</span>
+        </h1>
 
         <div class="clock-list">
             
             <div class="clock-item">
                 <span class="flag" aria-label="דגל ארהב">🇺🇸</span>
-                <span class="city-name">סיאטל - עבר</span>
+                <span class="city-name">סיאטל</span>
                 <div class="details">
                     <span class="time" id="time-us">00:00:00</span>
                     <span class="date" id="date-us">טוען תאריך...</span>
@@ -166,7 +187,7 @@
 
             <div class="clock-item">
                 <span class="flag" aria-label="דגל ישראל">🇮🇱</span>
-                <span class="city-name">ישראל - הווה</span>
+                <span class="city-name">ישראל</span>
                 <div class="details">
                     <span class="time" id="time-il">00:00:00</span>
                     <span class="date" id="date-il">טוען תאריך...</span>
@@ -176,7 +197,7 @@
 
             <div class="clock-item">
                 <span class="flag" aria-label="דגל תאילנד">🇹🇭</span>
-                <span class="city-name">תאילנד - עתיד</span>
+                <span class="city-name">תאילנד</span>
                 <div class="details">
                     <span class="time" id="time-th">00:00:00</span>
                     <span class="date" id="date-th">טוען תאריך...</span>
@@ -196,7 +217,7 @@
         // סדר חדש גם ב-JavaScript
         const locations = [
             {
-                name: 'סיאטל - עבר',
+                name: 'סיאטל',
                 tz: 'America/Los_Angeles',
                 weatherCity: 'Seattle',
                 timeEl: 'time-us',
@@ -204,7 +225,7 @@
                 weatherEl: 'weather-us'
             },
             {
-                name: 'ישראל - הווה',
+                name: 'ישראל',
                 tz: 'Asia/Jerusalem',
                 weatherCity: 'Jerusalem',
                 timeEl: 'time-il',
@@ -212,7 +233,7 @@
                 weatherEl: 'weather-il'
             },
             {
-                name: 'תאילנד - עתיד',
+                name: 'תאילנד',
                 tz: 'Asia/Bangkok',
                 weatherCity: 'Bangkok',
                 timeEl: 'time-th',
