@@ -77,7 +77,7 @@
 
         .clock-item .details {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* זמן | טמפרטורה */
+            grid-template-columns: 1fr 1fr; /* זמן | טמפרטמורה */
             grid-template-rows: auto auto; /* עיר, תאריך */
             gap: 5px 15px; /* רווחים בתוך הגריד */
             width: 100%; /* תופס את כל הרוחב */
@@ -155,12 +155,12 @@
         <div class="clock-list">
             
             <div class="clock-item">
-                <span class="flag" aria-label="דגל תאילנד">🇹🇭</span>
-                <span class="city-name">תאילנד</span>
+                <span class="flag" aria-label="דגל ארהב">🇺🇸</span>
+                <span class="city-name">סיאטל</span>
                 <div class="details">
-                    <span class="time" id="time-th">00:00:00</span>
-                    <span class="date" id="date-th">טוען תאריך...</span>
-                    <span class="weather" id="weather-th">--°C</span>
+                    <span class="time" id="time-us">00:00:00</span>
+                    <span class="date" id="date-us">טוען תאריך...</span>
+                    <span class="weather" id="weather-us">--°C</span>
                 </div>
             </div>
 
@@ -175,14 +175,15 @@
             </div>
 
             <div class="clock-item">
-                <span class="flag" aria-label="דגל ארהב">🇺🇸</span>
-                <span class="city-name">סיאטל</span>
+                <span class="flag" aria-label="דגל תאילנד">🇹🇭</span>
+                <span class="city-name">תאילנד</span>
                 <div class="details">
-                    <span class="time" id="time-us">00:00:00</span>
-                    <span class="date" id="date-us">טוען תאריך...</span>
-                    <span class="weather" id="weather-us">--°C</span>
+                    <span class="time" id="time-th">00:00:00</span>
+                    <span class="date" id="date-th">טוען תאריך...</span>
+                    <span class="weather" id="weather-th">--°C</span>
                 </div>
             </div>
+
         </div>
 
         <div class="notes-area">
@@ -192,17 +193,18 @@
     </div>
 
     <script>
+        // סדר חדש גם ב-JavaScript
         const locations = [
             {
-                name: 'תאילנד',
-                tz: 'Asia/Bangkok',
-                weatherCity: 'Bangkok',
-                timeEl: 'time-th',
-                dateEl: 'date-th',
-                weatherEl: 'weather-th'
+                name: 'סיאטל - עבר',
+                tz: 'America/Los_Angeles',
+                weatherCity: 'Seattle',
+                timeEl: 'time-us',
+                dateEl: 'date-us',
+                weatherEl: 'weather-us'
             },
             {
-                name: 'ישראל',
+                name: 'ישראל - הווה',
                 tz: 'Asia/Jerusalem',
                 weatherCity: 'Jerusalem',
                 timeEl: 'time-il',
@@ -210,12 +212,12 @@
                 weatherEl: 'weather-il'
             },
             {
-                name: 'סיאטל',
-                tz: 'America/Los_Angeles',
-                weatherCity: 'Seattle',
-                timeEl: 'time-us',
-                dateEl: 'date-us',
-                weatherEl: 'weather-us'
+                name: 'תאילנד - עתיד',
+                tz: 'Asia/Bangkok',
+                weatherCity: 'Bangkok',
+                timeEl: 'time-th',
+                dateEl: 'date-th',
+                weatherEl: 'weather-th'
             }
         ];
 
