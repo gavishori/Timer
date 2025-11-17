@@ -8,7 +8,6 @@
         /* * סגנון (CSS)
          */
         
-        /* מניעת גלילה וקביעת גובה מלא */
         html, body {
             height: 100%;
             margin: 0;
@@ -16,7 +15,7 @@
             overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f0f2f5;
-            color: #333; /* צבע טקסט כללי */
+            color: #333;
         }
 
         .container {
@@ -25,113 +24,120 @@
             max-width: 500px;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 15px; /* פינות עגולות יותר */
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* צל עמוק יותר */
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
             padding: 25px;
             box-sizing: border-box;
-            
             display: flex;
             flex-direction: column;
-            justify-content: space-between; /* מרווח את התוכן */
+            justify-content: space-between;
         }
 
         h1 {
             text-align: center;
-            color: #2196F3; /* כחול בהיר */
+            color: #2196F3;
             margin-top: 0;
             margin-bottom: 25px;
-            font-size: 1.8rem; /* גודל פונט נשאר עבור הכותרת הכוללת */
+            font-size: 1.8rem;
             flex-shrink: 0;
-            display: flex; /* כדי למרכז את הלוגו והטקסט בתוך ה-h1 */
+            display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* עיצוב הלוגו בתוך הכותרת */
         .logo-image {
-            height: 80px; /* גובה הלוגו, לתפוס בערך "שתי שורות" */
-            width: auto; /* שמירה על פרופורציות */
-            margin-bottom: 10px; /* רווח קטן מתחת ללוגו */
+            height: 80px;
+            width: auto;
+            margin-bottom: 10px;
         }
 
-        /* עיצוב הכיתוב שמתחת ללוגו */
         .logo-text {
-            font-size: 1.2rem; /* גודל פונט לכיתוב */
+            font-size: 1.2rem;
             font-weight: 600;
-            color: #424242; /* צבע כהה יותר, ניתן לשנות */
+            color: #424242;
         }
 
 
         .clock-list {
             display: flex;
             flex-direction: column;
-            gap: 18px; /* רווח בין כרטיסים */
+            gap: 18px;
             margin-bottom: 25px;
             flex-shrink: 0;
         }
 
+        /* --- עיצוב חדש לקוביות --- */
         .clock-item {
-            background-color: #e3f2fd; /* רקע בהיר יותר לכרטיס */
+            background-color: #e3f2fd;
             border-radius: 12px;
-            border: 1px solid #bbdefb; /* מסגרת דקה */
+            border: 1px solid #bbdefb;
             padding: 15px;
-            display: flex; /* לסידור הדגל והפרטים */
+            
+            /* חלוקה ל-2 עמודות (שמאל וימין) */
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 50% 50% */
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* צד ימין (עמודה ראשונה בגלל RTL) */
+        .clock-item .right-side {
+            display: flex;
             flex-direction: column;
-            align-items: center; /* מרכז את הדגל */
+            align-items: center;
+            text-align: center;
+            gap: 5px;
         }
 
         .clock-item .flag {
-            font-size: 3.5rem; /* דגל גדול יותר */
-            margin-bottom: 10px;
-            line-height: 1; /* מונע רווח מיותר מתחת לדגל */
+            font-size: 3.5rem;
+            line-height: 1;
         }
         
         .clock-item .city-name {
             font-size: 1.1rem;
             font-weight: 600;
-            color: #3f51b5; /* כחול כהה יותר לשם העיר */
-            margin-bottom: 8px;
+            color: #3f51b5;
         }
 
-        .clock-item .details {
-            display: grid;
-            grid-template-columns: 1fr 1fr; /* זמן | טמפרטמורה */
-            grid-template-rows: auto auto; /* עיר, תאריך */
-            gap: 5px 15px; /* רווחים בתוך הגריד */
-            width: 100%; /* תופס את כל הרוחב */
-            text-align: center; /* מרכז טקסט בתוך הגריד */
-            align-items: center;
-        }
-
-        .clock-item .time {
-            grid-column: 1 / 3; /* תופס 2 עמודות */
-            font-size: 2.2rem; /* שעה גדולה ובולטת */
-            font-weight: 700;
-            color: #0d47a1; /* כחול עמוק */
-            font-family: "Lucida Console", "Courier New", monospace;
-            line-height: 1;
-            margin-bottom: 5px;
+        .clock-item .timeline-text {
+            font-size: 0.9rem;
+            font-style: italic;
+            color: #555;
         }
         
         .clock-item .date {
-            grid-column: 1 / 2; /* עמודה ראשונה */
             font-size: 0.95rem;
-            color: #607d8b; /* אפור-כחול */
-            text-align: left;
-            padding-left: 10px; /* הזחה קלה */
+            color: #607d8b;
+        }
+
+        /* צד שמאל (עמודה שנייה) */
+        .clock-item .left-side {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .clock-item .time {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #0d47a1;
+            font-family: "Lucida Console", "Courier New", monospace;
+            line-height: 1;
         }
 
         .clock-item .weather {
-            grid-column: 2 / 3; /* עמודה שנייה */
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: #4CAF50; /* ירוק */
-            text-align: right;
-            padding-right: 10px; /* הזחה קלה */
+            color: #4CAF50;
             white-space: nowrap;
         }
 
-        /* סגנון לתיבת הטקסט - גמישה למילוי שטח */
+        /* --- סוף עיצוב קוביות --- */
+
         .notes-area {
             flex-grow: 1;
             display: flex;
@@ -139,7 +145,7 @@
             border-top: 1px solid #e0e0e0;
             padding-top: 20px;
             margin-top: 10px;
-            min-height: 80px; /* גובה מינימלי לתיבת הטקסט */
+            min-height: 80px;
         }
         
         .notes-area label {
@@ -169,38 +175,47 @@
 
     <div class="container">
         <h1>
-            <img src="https://i.imgur.com/uG9XJtY.png" alt="Flymily Logo" class="logo-image">
+            <img src="לוגו שקוף Flymily.png" alt="Flymily Logo" class="logo-image">
             <span class="logo-text">פזורים בעולם, מאוחדים בלב</span>
         </h1>
 
         <div class="clock-list">
             
             <div class="clock-item">
-                <span class="flag" aria-label="דגל ארהב">🇺🇸</span>
-                <span class="city-name">סיאטל</span>
-                <div class="details">
-                    <span class="time" id="time-us">00:00:00</span>
+                <div class="right-side">
+                    <span class="flag" aria-label="דגל ארהב">🇺🇸</span>
+                    <span class="city-name">סיאטל</span>
+                    <span class="timeline-text">עבר</span>
                     <span class="date" id="date-us">טוען תאריך...</span>
+                </div>
+                <div class="left-side">
+                    <span class="time" id="time-us">00:00:00</span>
                     <span class="weather" id="weather-us">--°C</span>
                 </div>
             </div>
 
             <div class="clock-item">
-                <span class="flag" aria-label="דגל ישראל">🇮🇱</span>
-                <span class="city-name">ישראל</span>
-                <div class="details">
-                    <span class="time" id="time-il">00:00:00</span>
+                <div class="right-side">
+                    <span class="flag" aria-label="דגל ישראל">🇮🇱</span>
+                    <span class="city-name">ישראל</span>
+                    <span class="timeline-text">הווה</span>
                     <span class="date" id="date-il">טוען תאריך...</span>
+                </div>
+                <div class="left-side">
+                    <span class="time" id="time-il">00:00:00</span>
                     <span class="weather" id="weather-il">--°C</span>
                 </div>
             </div>
 
             <div class="clock-item">
-                <span class="flag" aria-label="דגל תאילנד">🇹🇭</span>
-                <span class="city-name">תאילנד</span>
-                <div class="details">
-                    <span class="time" id="time-th">00:00:00</span>
+                <div class="right-side">
+                    <span class="flag" aria-label="דגל תאילנד">🇹🇭</span>
+                    <span class="city-name">תאילנד</span>
+                    <span class="timeline-text">עתיד</span>
                     <span class="date" id="date-th">טוען תאריך...</span>
+                </div>
+                <div class="left-side">
+                    <span class="time" id="time-th">00:00:00</span>
                     <span class="weather" id="weather-th">--°C</span>
                 </div>
             </div>
@@ -214,7 +229,6 @@
     </div>
 
     <script>
-        // סדר חדש גם ב-JavaScript
         const locations = [
             {
                 name: 'סיאטל',
@@ -254,11 +268,10 @@
                     hour12: false
                 };
                 
-                // תאריך מקוצר: רק יום וחודש
                 const dateOptions = {
                     timeZone: loc.tz,
                     day: 'numeric',
-                    month: 'short', // 'מאי' או 'יוני'
+                    month: 'short',
                 };
                 
                 const timeString = now.toLocaleTimeString('he-IL', timeOptions);
