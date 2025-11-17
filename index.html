@@ -12,7 +12,7 @@
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden;
+            overflow: hidden; /* מונע גלילה אנכית ואופקית */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f0f2f5;
             color: #333;
@@ -45,16 +45,18 @@
             align-items: center;
         }
 
+        /* עיצוב הלוגו בתוך הכותרת - הוגדל ב-150% */
         .logo-image {
-            height: 80px;
-            width: auto;
+            height: 120px; /* 80px * 1.5 = 120px */
+            width: auto; /* שמירה על פרופורציות */
             margin-bottom: 10px;
         }
 
+        /* עיצוב הכיתוב שמתחת ללוגו - הוגדל ב-50% וצבע כחול */
         .logo-text {
-            font-size: 1.2rem;
+            font-size: 1.8rem; /* 1.2rem * 1.5 = 1.8rem */
             font-weight: 600;
-            color: #424242;
+            color: #2196F3; /* צבע כחול */
         }
 
 
