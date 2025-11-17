@@ -7,104 +7,131 @@
     <style>
         /* * סגנון (CSS)
          */
-        body {
+        
+        /* מניעת גלילה וקביעת גובה מלא */
+        html, body {
+            height: 100%; /* שימוש ב-100% במקום 100vh יכול להיות יציב יותר בדפדפני מובייל ישנים */
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* מבטל את הגלילה האנכית של הדף */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f0f2f5;
-            color: #1c1e21;
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
         }
 
         .container {
             width: 100%;
-            max-width: 500px;
+            height: 100%;
+            max-width: 500px; /* מגביל רוחב במחשב, במובייל יתפוס 100% */
+            margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             padding: 20px;
-            box-sizing: border-box;
+            box-sizing: border-box; /* מבטיח שה-padding לא ישבור את הגובה/רוחב */
+            
+            /* הגדרת Flexbox כדי למלא את המסך מלמעלה למטה */
+            display: flex;
+            flex-direction: column;
         }
 
         h1 {
             text-align: center;
             color: #007bff;
             margin-top: 0;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+            flex-shrink: 0; /* מונע מהכותרת להתכווץ */
         }
 
         .clock-list {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 15px; /* צמצום רווחים */
+            margin-bottom: 20px;
+            flex-shrink: 0; /* מונע מרשימת השעונים להתכווץ */
         }
 
         .clock-item {
             display: grid;
-            grid-template-columns: auto 1fr; /* Flag | Name/Time/Date */
+            grid-template-columns: auto 1fr; /* דגל | פרטים */
             align-items: center;
             gap: 15px;
-            padding: 15px;
+            padding: 12px;
             background-color: #f9f9f9;
             border-radius: 10px;
             border: 1px solid #e0e0e0;
         }
 
         .clock-item .flag {
-            font-size: 2.5rem; /* גודל אמוג'י הדגל */
+            font-size: 2.2rem;
+            padding-top: 5px; /* יישור קל של הדגל */
         }
 
         .clock-item .details {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr auto; /* זמן/תאריך | מזג אוויר */
+            grid-template-rows: auto auto auto; /* עיר, זמן, תאריך */
+            grid-template-areas: 
+                "city weather"
+                "time weather"
+                "date weather";
+            align-items: center;
+            gap: 0 10px;
         }
 
         .clock-item .city {
-            font-size: 1.2rem;
+            grid-area: city;
+            font-size: 1.1rem;
             font-weight: 600;
         }
 
         .clock-item .time {
-            font-size: 1.6rem;
+            grid-area: time;
+            font-size: 1.4rem;
             font-weight: 700;
             color: #333;
             font-family: "Lucida Console", "Courier New", monospace;
-            margin-top: 4px;
         }
         
         .clock-item .date {
-            font-size: 0.95rem;
+            grid-area: date;
+            font-size: 0.85rem;
             color: #555;
-            margin-top: 4px;
         }
 
-        /* סגנון לתיבת הטקסט */
+        .clock-item .weather {
+            grid-area: weather;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #007bff;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* סגנון לתיבת הטקסט - גמישה למילוי שטח */
         .notes-area {
+            flex-grow: 1; /* גורם לאזור זה למלא את כל השטח הנותר */
             display: flex;
             flex-direction: column;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            min-height: 100px; /* גובה מינימלי למקרה שהכל מתכווץ */
         }
         
         .notes-area label {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
         }
 
         #notes {
             width: 100%;
-            height: 150px;
+            flex-grow: 1; /* גורם לתיבת הטקסט למלא את האזור שלה */
             padding: 10px;
             font-family: inherit;
             font-size: 1rem;
             border: 1px solid #ccc;
             border-radius: 8px;
-            resize: vertical; /* מאפשר שינוי גודל אנכי */
-            box-sizing: border-box; /* מבטיח שה-padding לא ישפיע על הרוחב */
+            resize: none; /* ביטול אפשרות שינוי גודל ידני */
+            box-sizing: border-box;
         }
         
     </style>
@@ -122,6 +149,7 @@
                     <span class="city">תאילנד</span>
                     <span class="time" id="time-th">00:00:00</span>
                     <span class="date" id="date-th">טוען תאריך...</span>
+                    <span class="weather" id="weather-th">--°C</span>
                 </div>
             </div>
 
@@ -131,6 +159,7 @@
                     <span class="city">ישראל</span>
                     <span class="time" id="time-il">00:00:00</span>
                     <span class="date" id="date-il">טוען תאריך...</span>
+                    <span class="weather" id="weather-il">--°C</span>
                 </div>
             </div>
 
@@ -140,11 +169,10 @@
                     <span class="city">סיאטל</span>
                     <span class="time" id="time-us">00:00:00</span>
                     <span class="date" id="date-us">טוען תאריך...</span>
+                    <span class="weather" id="weather-us">--°C</span>
                 </div>
             </div>
         </div>
-
-        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
 
         <div class="notes-area">
             <label for="notes">✍️ פתקים:</label>
@@ -157,20 +185,26 @@
             {
                 name: 'תאילנד',
                 tz: 'Asia/Bangkok',
+                weatherCity: 'Bangkok', // שם עיר עבור wttr.in
                 timeEl: 'time-th',
-                dateEl: 'date-th'
+                dateEl: 'date-th',
+                weatherEl: 'weather-th'
             },
             {
                 name: 'ישראל',
                 tz: 'Asia/Jerusalem',
+                weatherCity: 'Jerusalem',
                 timeEl: 'time-il',
-                dateEl: 'date-il'
+                dateEl: 'date-il',
+                weatherEl: 'weather-il'
             },
             {
                 name: 'סיאטל',
                 tz: 'America/Los_Angeles',
+                weatherCity: 'Seattle',
                 timeEl: 'time-us',
-                dateEl: 'date-us'
+                dateEl: 'date-us',
+                weatherEl: 'weather-us'
             }
         ];
 
@@ -191,26 +225,51 @@
                 // הגדרות לעיצוב התאריך
                 const dateOptions = {
                     timeZone: loc.tz,
-                    weekday: 'long', // 'יום שני'
-                    day: 'numeric',  // '27'
-                    month: 'long',   // 'מאי'
-                    year: 'numeric'  // '2024'
+                    weekday: 'short', // 'יום ב'
+                    day: 'numeric',   // '17'
+                    month: 'numeric', // '11'
                 };
                 
-                // שימוש ב-he-IL (עברית) כדי לקבל את הפורמט הנכון
                 const timeString = now.toLocaleTimeString('he-IL', timeOptions);
                 const dateString = now.toLocaleDateString('he-IL', dateOptions);
                 
                 const timeEl = document.getElementById(loc.timeEl);
                 const dateEl = document.getElementById(loc.dateEl);
                 
-                if (timeEl) {
-                    timeEl.textContent = timeString;
-                }
-                if (dateEl) {
-                    dateEl.textContent = dateString;
-                }
+                if (timeEl) timeEl.textContent = timeString;
+                if (dateEl) dateEl.textContent = dateString;
             });
+        }
+
+        // פונקציה לקבלת נתוני מזג אוויר (ללא API KEY)
+        async function fetchWeather() {
+            for (const loc of locations) {
+                const el = document.getElementById(loc.weatherEl);
+                if (!el) continue;
+
+                el.textContent = 'טוען...';
+
+                try {
+                    // שימוש בשירות wttr.in לקבלת JSON
+                    const url = `https://wttr.in/${loc.weatherCity}?format=j1`;
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`שגיאת רשת: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // שליפת הטמפרטורה הנוכחית
+                    const temp = data.current_condition[0].temp_C;
+                    
+                    el.textContent = `${temp}°C`;
+
+                } catch (error) {
+                    console.error(`שגיאה בקבלת מזג אוויר עבור ${loc.name}:`, error);
+                    el.textContent = 'שגיאה';
+                }
+            }
         }
 
         // פונקציית אתחול
@@ -218,9 +277,12 @@
             // עדכון שעונים מיידי ואז כל שנייה
             updateClocks();
             setInterval(updateClocks, 1000);
-            
-            // תיבת הטקסט כבר תומכת בירידת שורה עם Enter כברירת מחדל,
-            // כך שאין צורך בקוד מיוחד עבורה.
+
+            // קבלת מזג אוויר בטעינה
+            fetchWeather();
+            // רענון מזג אוויר כל 30 דקות (1,800,000 מילישניות)
+            // (כדי לא להעמיס על השירות החינמי)
+            setInterval(fetchWeather, 1800000);
         }
 
         // הפעלת האפליקציה כשהדף נטען
