@@ -46,7 +46,7 @@
 
         .clock-item {
             display: grid;
-            grid-template-columns: auto 1fr auto; /* Flag | Name/Time | Weather */
+            grid-template-columns: auto 1fr; /* Flag | Name/Time/Date */
             align-items: center;
             gap: 15px;
             padding: 15px;
@@ -74,14 +74,13 @@
             font-weight: 700;
             color: #333;
             font-family: "Lucida Console", "Courier New", monospace;
+            margin-top: 4px;
         }
-
-        .clock-item .weather {
-            font-size: 1.1rem;
-            font-weight: 500;
+        
+        .clock-item .date {
+            font-size: 0.95rem;
             color: #555;
-            text-align: left;
-            white-space: nowrap; /* מונע שבירת שורה בטמפרטורה */
+            margin-top: 4px;
         }
 
         /* סגנון לתיבת הטקסט */
@@ -107,16 +106,6 @@
             resize: vertical; /* מאפשר שינוי גודל אנכי */
             box-sizing: border-box; /* מבטיח שה-padding לא ישפיע על הרוחב */
         }
-
-        /* מצב טעינה או שגיאה של מזג אוויר */
-        .weather.loading::after {
-            content: 'טוען...';
-            font-style: italic;
-            color: #999;
-        }
-        .weather.error {
-            color: #d9534f;
-        }
         
     </style>
 </head>
@@ -126,22 +115,23 @@
         <h1>🌎 שעון עולמי</h1>
 
         <div class="clock-list">
-            <div class="clock-item">
-                <span class="flag" aria-label="דגל ישראל">🇮🇱</span>
-                <div class="details">
-                    <span class="city">ישראל</span>
-                    <span class="time" id="time-il">00:00:00</span>
-                </div>
-                <span class="weather" id="weather-il">--°C</span>
-            </div>
-
+            
             <div class="clock-item">
                 <span class="flag" aria-label="דגל תאילנד">🇹🇭</span>
                 <div class="details">
                     <span class="city">תאילנד</span>
                     <span class="time" id="time-th">00:00:00</span>
+                    <span class="date" id="date-th">טוען תאריך...</span>
                 </div>
-                <span class="weather" id="weather-th">--°C</span>
+            </div>
+
+            <div class="clock-item">
+                <span class="flag" aria-label="דגל ישראל">🇮🇱</span>
+                <div class="details">
+                    <span class="city">ישראל</span>
+                    <span class="time" id="time-il">00:00:00</span>
+                    <span class="date" id="date-il">טוען תאריך...</span>
+                </div>
             </div>
 
             <div class="clock-item">
@@ -149,8 +139,8 @@
                 <div class="details">
                     <span class="city">סיאטל</span>
                     <span class="time" id="time-us">00:00:00</span>
+                    <span class="date" id="date-us">טוען תאריך...</span>
                 </div>
-                <span class="weather" id="weather-us">--°C</span>
             </div>
         </div>
 
@@ -163,43 +153,33 @@
     </div>
 
     <script>
-        // --- !!! חובה לערוך !!! ---
-        // הדבק כאן את מפתח ה-API שלך שקיבלת מ-OpenWeatherMap
-        const API_KEY = 'YOUR_API_KEY_HERE';
-        // -------------------------
-
         const locations = [
-            {
-                name: 'ישראל',
-                tz: 'Asia/Jerusalem',
-                lat: 31.7683, // ירושלים
-                lon: 35.2137,
-                timeEl: 'time-il',
-                weatherEl: 'weather-il'
-            },
             {
                 name: 'תאילנד',
                 tz: 'Asia/Bangkok',
-                lat: 13.7563, // בנגקוק
-                lon: 100.5018,
                 timeEl: 'time-th',
-                weatherEl: 'weather-th'
+                dateEl: 'date-th'
+            },
+            {
+                name: 'ישראל',
+                tz: 'Asia/Jerusalem',
+                timeEl: 'time-il',
+                dateEl: 'date-il'
             },
             {
                 name: 'סיאטל',
                 tz: 'America/Los_Angeles',
-                lat: 47.6062, // סיאטל
-                lon: -122.3321,
                 timeEl: 'time-us',
-                weatherEl: 'weather-us'
+                dateEl: 'date-us'
             }
         ];
 
-        // פונקציה לעדכון השעונים (רצה כל שנייה)
+        // פונקציה לעדכון השעונים והתאריכים (רצה כל שנייה)
         function updateClocks() {
             const now = new Date();
 
             locations.forEach(loc => {
+                // הגדרות לעיצוב השעה
                 const timeOptions = {
                     timeZone: loc.tz,
                     hour: '2-digit',
@@ -208,60 +188,29 @@
                     hour12: false
                 };
                 
+                // הגדרות לעיצוב התאריך
+                const dateOptions = {
+                    timeZone: loc.tz,
+                    weekday: 'long', // 'יום שני'
+                    day: 'numeric',  // '27'
+                    month: 'long',   // 'מאי'
+                    year: 'numeric'  // '2024'
+                };
+                
                 // שימוש ב-he-IL (עברית) כדי לקבל את הפורמט הנכון
                 const timeString = now.toLocaleTimeString('he-IL', timeOptions);
+                const dateString = now.toLocaleDateString('he-IL', dateOptions);
                 
-                const el = document.getElementById(loc.timeEl);
-                if (el) {
-                    el.textContent = timeString;
+                const timeEl = document.getElementById(loc.timeEl);
+                const dateEl = document.getElementById(loc.dateEl);
+                
+                if (timeEl) {
+                    timeEl.textContent = timeString;
+                }
+                if (dateEl) {
+                    dateEl.textContent = dateString;
                 }
             });
-        }
-
-        // פונקציה לקבלת נתוני מזג אוויר (רצה פעם אחת בטעינה וכל 15 דקות)
-        async function fetchWeather() {
-            if (API_KEY === 'YOUR_API_KEY_HERE' || !API_KEY) {
-                console.error('מפתח API חסר. לא ניתן להביא נתוני מזג אוויר.');
-                locations.forEach(loc => {
-                    const el = document.getElementById(loc.weatherEl);
-                    if (el) {
-                        el.textContent = 'מפתח API חסר';
-                        el.classList.add('error');
-                    }
-                });
-                return;
-            }
-
-            for (const loc of locations) {
-                const el = document.getElementById(loc.weatherEl);
-                if (!el) continue;
-
-                el.textContent = 'טוען...';
-                el.classList.remove('error');
-
-                try {
-                    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${loc.lat}&lon=${loc.lon}&appid=${API_KEY}&units=metric&lang=he`;
-                    const response = await fetch(url);
-                    
-                    if (!response.ok) {
-                        throw new Error(`שגיאת רשת: ${response.statusText}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    // עיגול הטמפרטורה למספר שלם
-                    const temp = Math.round(data.main.temp);
-                    // תיאור מזג אוויר (לדוגמה: "מעונן חלקית")
-                    const description = data.weather[0] ? data.weather[0].description : '';
-                    
-                    el.textContent = `${temp}°C, ${description}`;
-
-                } catch (error) {
-                    console.error(`שגיאה בקבלת מזג אוויר עבור ${loc.name}:`, error);
-                    el.textContent = 'שגיאה';
-                    el.classList.add('error');
-                }
-            }
         }
 
         // פונקציית אתחול
@@ -269,11 +218,6 @@
             // עדכון שעונים מיידי ואז כל שנייה
             updateClocks();
             setInterval(updateClocks, 1000);
-
-            // קבלת מזג אוויר בטעינה
-            fetchWeather();
-            // רענון מזג אוויר כל 15 דקות (900,000 מילישניות)
-            setInterval(fetchWeather, 900000);
             
             // תיבת הטקסט כבר תומכת בירידת שורה עם Enter כברירת מחדל,
             // כך שאין צורך בקוד מיוחד עבורה.
