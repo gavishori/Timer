@@ -26,7 +26,10 @@
             background-color: #ffffff;
             border-radius: 15px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            padding: 15px 25px; /* צומצם padding עליון/תחתון */
+            /* *** שינוי כאן (מרווח A) ***
+              ה-padding העליון הוקטן מ-15px ל-5px 
+            */
+            padding: 5px 25px 15px 25px; 
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -37,7 +40,8 @@
             text-align: center;
             color: #2196F3;
             margin-top: 0;
-            margin-bottom: 15px; /* צומצם margin-bottom */
+            /* ה-margin מתחת לכותרת כולה צומצם */
+            margin-bottom: 10px; 
             font-size: 1.8rem;
             flex-shrink: 0;
             display: flex;
@@ -45,14 +49,15 @@
             align-items: center;
         }
 
-        /* עיצוב הלוגו בתוך הכותרת - הוגדל ב-50% נוספים */
         .logo-image {
-            height: 240px; /* 160px * 1.5 = 240px */
-            width: auto; /* שמירה על פרופורציות */
-            margin-bottom: 5px; /* צומצם margin-bottom */
+            height: 240px;
+            width: auto;
+            /* *** שינוי כאן (מרווח B) ***
+              ה-margin מתחת ללוגו הוקטן מ-5px ל-2px
+            */
+            margin-bottom: 2px; 
         }
 
-        /* עיצוב הכיתוב שמתחת ללוגו */
         .logo-text {
             font-size: 1.8rem;
             font-weight: 600;
@@ -63,68 +68,63 @@
         .clock-list {
             display: flex;
             flex-direction: column;
-            gap: 12px; /* צומצם gap בין הפריטים */
-            margin-bottom: 15px; /* צומצם margin-bottom */
+            gap: 12px;
+            margin-bottom: 15px;
             flex-shrink: 0;
         }
 
-        /* --- עיצוב חדש לקוביות --- */
         .clock-item {
             background-color: #e3f2fd;
             border-radius: 12px;
             border: 1px solid #bbdefb;
-            padding: 10px; /* צומצם padding פנימי */
-            
-            /* חלוקה ל-2 עמודות (שמאל וימין) */
+            padding: 10px;
             display: grid;
-            grid-template-columns: 1fr 1fr; /* 50% 50% */
-            gap: 5px; /* צומצם gap */
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
             align-items: center;
         }
 
-        /* צד ימין (עמודה ראשונה בגלל RTL) */
         .clock-item .right-side {
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 2px; /* צומצם gap */
+            gap: 2px;
         }
 
         .clock-item .flag {
-            font-size: 3rem; /* הותאם מעט לגודל החדש */
+            font-size: 3rem;
             line-height: 1;
         }
         
         .clock-item .city-name {
-            font-size: 1rem; /* הותאם מעט לגודל החדש */
+            font-size: 1rem;
             font-weight: 600;
             color: #3f51b5;
         }
 
         .clock-item .timeline-text {
-            font-size: 0.8rem; /* הותאם מעט לגודל החדש */
+            font-size: 0.8rem;
             font-style: italic;
             color: #555;
         }
         
         .clock-item .date {
-            font-size: 0.85rem; /* הותאם מעט לגודל החדש */
+            font-size: 0.85rem;
             color: #607d8b;
         }
 
-        /* צד שמאל (עמודה שנייה) */
         .clock-item .left-side {
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 8px; /* צומצם gap */
+            gap: 8px;
             justify-content: center;
         }
 
         .clock-item .time {
-            font-size: 2rem; /* הותאם מעט לגודל החדש */
+            font-size: 2rem;
             font-weight: 700;
             color: #0d47a1;
             font-family: "Lucida Console", "Courier New", monospace;
@@ -132,28 +132,26 @@
         }
 
         .clock-item .weather {
-            font-size: 1rem; /* הותאם מעט לגודל החדש */
+            font-size: 1rem;
             font-weight: 600;
             color: #4CAF50;
             white-space: nowrap;
         }
-
-        /* --- סוף עיצוב קוביות --- */
 
         .notes-area {
             flex-grow: 1;
             display: flex;
             flex-direction: column;
             border-top: 1px solid #e0e0e0;
-            padding-top: 10px; /* צומצם padding-top */
-            margin-top: 10px; /* צומצם margin-top */
-            min-height: 60px; /* גובה מינימלי הותאם */
+            padding-top: 10px;
+            margin-top: 10px;
+            min-height: 60px;
         }
         
         .notes-area label {
             font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 8px; /* צומצם margin-bottom */
+            margin-bottom: 8px;
             color: #424242;
             flex-shrink: 0;
         }
@@ -161,7 +159,7 @@
         #notes {
             width: 100%;
             flex-grow: 1;
-            padding: 10px; /* צומצם padding */
+            padding: 10px;
             font-family: inherit;
             font-size: 1rem;
             border: 1px solid #bdbdbd;
