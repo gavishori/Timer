@@ -26,7 +26,7 @@
             background-color: #ffffff;
             border-radius: 15px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            padding: 25px;
+            padding: 15px 25px; /* צומצם padding עליון/תחתון */
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
@@ -37,7 +37,7 @@
             text-align: center;
             color: #2196F3;
             margin-top: 0;
-            margin-bottom: 25px;
+            margin-bottom: 15px; /* צומצם margin-bottom */
             font-size: 1.8rem;
             flex-shrink: 0;
             display: flex;
@@ -45,26 +45,26 @@
             align-items: center;
         }
 
-        /* עיצוב הלוגו בתוך הכותרת - הוגדל ל-200% */
+        /* עיצוב הלוגו בתוך הכותרת - הוגדל ב-50% נוספים */
         .logo-image {
-            height: 160px; /* 80px * 2.0 = 160px */
+            height: 240px; /* 160px * 1.5 = 240px */
             width: auto; /* שמירה על פרופורציות */
-            margin-bottom: 10px;
+            margin-bottom: 5px; /* צומצם margin-bottom */
         }
 
-        /* עיצוב הכיתוב שמתחת ללוגו - הוגדל ב-50% וצבע כחול */
+        /* עיצוב הכיתוב שמתחת ללוגו */
         .logo-text {
-            font-size: 1.8rem; /* 1.2rem * 1.5 = 1.8rem */
+            font-size: 1.8rem;
             font-weight: 600;
-            color: #2196F3; /* צבע כחול */
+            color: #2196F3;
         }
 
 
         .clock-list {
             display: flex;
             flex-direction: column;
-            gap: 18px;
-            margin-bottom: 25px;
+            gap: 12px; /* צומצם gap בין הפריטים */
+            margin-bottom: 15px; /* צומצם margin-bottom */
             flex-shrink: 0;
         }
 
@@ -73,12 +73,12 @@
             background-color: #e3f2fd;
             border-radius: 12px;
             border: 1px solid #bbdefb;
-            padding: 15px;
+            padding: 10px; /* צומצם padding פנימי */
             
             /* חלוקה ל-2 עמודות (שמאל וימין) */
             display: grid;
             grid-template-columns: 1fr 1fr; /* 50% 50% */
-            gap: 10px;
+            gap: 5px; /* צומצם gap */
             align-items: center;
         }
 
@@ -88,28 +88,28 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 5px;
+            gap: 2px; /* צומצם gap */
         }
 
         .clock-item .flag {
-            font-size: 3.5rem;
+            font-size: 3rem; /* הותאם מעט לגודל החדש */
             line-height: 1;
         }
         
         .clock-item .city-name {
-            font-size: 1.1rem;
+            font-size: 1rem; /* הותאם מעט לגודל החדש */
             font-weight: 600;
             color: #3f51b5;
         }
 
         .clock-item .timeline-text {
-            font-size: 0.9rem;
+            font-size: 0.8rem; /* הותאם מעט לגודל החדש */
             font-style: italic;
             color: #555;
         }
         
         .clock-item .date {
-            font-size: 0.95rem;
+            font-size: 0.85rem; /* הותאם מעט לגודל החדש */
             color: #607d8b;
         }
 
@@ -119,12 +119,12 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 10px;
+            gap: 8px; /* צומצם gap */
             justify-content: center;
         }
 
         .clock-item .time {
-            font-size: 2.2rem;
+            font-size: 2rem; /* הותאם מעט לגודל החדש */
             font-weight: 700;
             color: #0d47a1;
             font-family: "Lucida Console", "Courier New", monospace;
@@ -132,7 +132,7 @@
         }
 
         .clock-item .weather {
-            font-size: 1.1rem;
+            font-size: 1rem; /* הותאם מעט לגודל החדש */
             font-weight: 600;
             color: #4CAF50;
             white-space: nowrap;
@@ -145,15 +145,15 @@
             display: flex;
             flex-direction: column;
             border-top: 1px solid #e0e0e0;
-            padding-top: 20px;
-            margin-top: 10px;
-            min-height: 80px;
+            padding-top: 10px; /* צומצם padding-top */
+            margin-top: 10px; /* צומצם margin-top */
+            min-height: 60px; /* גובה מינימלי הותאם */
         }
         
         .notes-area label {
             font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 8px; /* צומצם margin-bottom */
             color: #424242;
             flex-shrink: 0;
         }
@@ -161,7 +161,7 @@
         #notes {
             width: 100%;
             flex-grow: 1;
-            padding: 12px;
+            padding: 10px; /* צומצם padding */
             font-family: inherit;
             font-size: 1rem;
             border: 1px solid #bdbdbd;
