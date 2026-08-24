@@ -19,28 +19,38 @@
             color: #fff;
         }
 
+        /* פריסה: עמודת משימות | הטיימר במרכז | עמודת עבודות בית */
         .container {
             height: 100vh;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 16px 20px;
-            text-align: center;
+            flex-direction: row;
+            align-items: stretch;
+            gap: 20px;
+            padding: 20px;
             box-sizing: border-box;
         }
 
+        /* ---- עמודת ה־Timer במרכז ---- */
+        .center-panel {
+            flex: 0 0 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-width: 0;
+        }
+
         h1 {
-            font-size: 1.7rem;
+            font-size: 1.6rem;
             margin: 0 0 4px 0;
             font-weight: 700;
-            flex-shrink: 0;
         }
 
         .subtitle {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #cfe0ff;
-            margin-bottom: 14px;
-            flex-shrink: 0;
+            margin-bottom: 18px;
         }
 
         .countdown {
@@ -49,21 +59,20 @@
             gap: 10px;
             flex-wrap: wrap;
             justify-content: center;
-            margin-bottom: 10px;
-            flex-shrink: 0;
+            margin-bottom: 14px;
         }
 
         .unit {
             background: rgba(255, 255, 255, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 14px;
-            padding: 8px 14px;
+            padding: 10px 14px;
             min-width: 68px;
             backdrop-filter: blur(6px);
         }
 
         .unit .value {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 700;
             font-family: "Lucida Console", "Courier New", monospace;
             line-height: 1;
@@ -78,37 +87,22 @@
         .target-date {
             font-size: 0.8rem;
             color: #cfe0ff;
-            margin-bottom: 14px;
-            flex-shrink: 0;
         }
 
         .done-message {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
             display: none;
-            flex-shrink: 0;
         }
 
-        .tasks-section {
-            display: flex;
-            align-items: stretch;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-            max-width: 1100px;
-            flex: 1;
-            min-height: 0; /* מאפשר לילדים להתכווץ ולגלול פנימית במקום לדחוף את הדף */
-        }
-
+        /* ---- עמודות המשימות (שני הצדדים) ---- */
         .task-column {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 20px;
-            padding: 18px;
-            flex: 1 1 420px;
-            min-width: 280px;
-            max-width: 520px;
+            padding: 20px;
+            flex: 1 1 0;
+            min-width: 0;
             backdrop-filter: blur(6px);
             text-align: right;
             display: flex;
@@ -117,8 +111,8 @@
         }
 
         .task-column h2 {
-            font-size: 1.15rem;
-            margin: 0 0 12px 0;
+            font-size: 1.2rem;
+            margin: 0 0 14px 0;
             text-align: center;
             flex-shrink: 0;
         }
@@ -132,7 +126,7 @@
         .add-task {
             display: flex;
             gap: 10px;
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             flex-shrink: 0;
         }
 
@@ -237,15 +231,38 @@
             color: #ff6b6b;
         }
 
-        @media (max-width: 640px) {
-            .tasks-section {
+        /* מסכים צרים: הכל נערם אנכית - משימות למעלה, טיימר, עבודות בית למטה */
+        @media (max-width: 820px) {
+            .container {
                 flex-direction: column;
-                flex-wrap: nowrap;
+                padding: 14px;
+                gap: 12px;
+            }
+
+            .center-panel {
+                flex: 0 0 auto;
+                order: -1;
             }
 
             .task-column {
-                max-width: 100%;
-                min-width: 0;
+                flex: 1 1 0;
+            }
+
+            h1 {
+                font-size: 1.3rem;
+            }
+
+            .subtitle {
+                margin-bottom: 10px;
+            }
+
+            .unit {
+                padding: 6px 10px;
+                min-width: 56px;
+            }
+
+            .unit .value {
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -253,50 +270,50 @@
 <body>
 
     <div class="container">
-        <h1>עוברים לאבן יהודה 🏡</h1>
-        <div class="subtitle">הספירה לאחור למעבר הגדול</div>
-
-        <div class="countdown" id="countdown">
-            <div class="unit">
-                <div class="value" id="days">00</div>
-                <div class="label">ימים</div>
+        <div class="task-column" data-key="tasks">
+            <h2>משימות <span class="task-count"></span></h2>
+            <div class="add-task">
+                <input type="text" placeholder="משימה חדשה..." maxlength="200">
+                <button type="button">➕</button>
             </div>
-            <div class="unit">
-                <div class="value" id="hours">00</div>
-                <div class="label">שעות</div>
-            </div>
-            <div class="unit">
-                <div class="value" id="minutes">00</div>
-                <div class="label">דקות</div>
-            </div>
-            <div class="unit">
-                <div class="value" id="seconds">00</div>
-                <div class="label">שניות</div>
-            </div>
+            <ul class="task-list"></ul>
         </div>
 
-        <div class="done-message" id="doneMessage">🎉 הגיע היום! בהצלחה במעבר! 🎉</div>
+        <div class="center-panel">
+            <h1>עוברים לאבן יהודה 🏡</h1>
+            <div class="subtitle">הספירה לאחור למעבר הגדול</div>
 
-        <div class="target-date">היעד: 24.09.2026, 06:00</div>
-
-        <div class="tasks-section">
-            <div class="task-column" data-key="tasks">
-                <h2>משימות <span class="task-count"></span></h2>
-                <div class="add-task">
-                    <input type="text" placeholder="משימה חדשה..." maxlength="200">
-                    <button type="button">➕</button>
+            <div class="countdown" id="countdown">
+                <div class="unit">
+                    <div class="value" id="days">00</div>
+                    <div class="label">ימים</div>
                 </div>
-                <ul class="task-list"></ul>
+                <div class="unit">
+                    <div class="value" id="hours">00</div>
+                    <div class="label">שעות</div>
+                </div>
+                <div class="unit">
+                    <div class="value" id="minutes">00</div>
+                    <div class="label">דקות</div>
+                </div>
+                <div class="unit">
+                    <div class="value" id="seconds">00</div>
+                    <div class="label">שניות</div>
+                </div>
             </div>
 
-            <div class="task-column" data-key="housework">
-                <h2>עבודות בית <span class="task-count"></span></h2>
-                <div class="add-task">
-                    <input type="text" placeholder="משימה חדשה..." maxlength="200">
-                    <button type="button">➕</button>
-                </div>
-                <ul class="task-list"></ul>
+            <div class="done-message" id="doneMessage">🎉 הגיע היום! בהצלחה במעבר! 🎉</div>
+
+            <div class="target-date">היעד: 24.09.2026, 06:00</div>
+        </div>
+
+        <div class="task-column" data-key="housework">
+            <h2>עבודות בית <span class="task-count"></span></h2>
+            <div class="add-task">
+                <input type="text" placeholder="משימה חדשה..." maxlength="200">
+                <button type="button">➕</button>
             </div>
+            <ul class="task-list"></ul>
         </div>
     </div>
 
