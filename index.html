@@ -258,6 +258,7 @@
             font-style: italic;
             color: #b8c6e0;
             word-break: break-word;
+            white-space: pre-wrap; /* שומר על ירידות שורה שהוזנו עם Shift+Enter */
             cursor: pointer;
         }
 
@@ -269,6 +270,10 @@
             background: rgba(255, 255, 255, 0.95);
             color: #333;
             font-size: 0.9rem;
+            font-family: inherit;
+            resize: none;
+            overflow: hidden;
+            display: block;
         }
 
         .task-list li .delete-task {
@@ -528,16 +533,22 @@
             });
         }
 
-        // פותח שדה עריכה מקומי להערה של משימה ספציפית, בלי לרנדר מחדש את כל הרשימה
+        // פותח שדה עריכה מקומי להערה של משימה ספציפית, בלי לרנדר מחדש את כל הרשימה.
+        // Enter לבד שומר, Shift+Enter מוריד שורה בתוך ההערה, Escape מבטל.
         function startNoteEdit(body, task, key, tasks, column) {
             body.innerHTML = '';
 
-            const input = document.createElement('input');
-            input.type = 'text';
+            const input = document.createElement('textarea');
             input.className = 'note-input';
             input.maxLength = 300;
+            input.rows = 1;
             input.value = task.note || '';
-            input.placeholder = 'הערה...';
+            input.placeholder = 'הערה... (Shift+Enter לשורה חדשה)';
+
+            const autoResize = () => {
+                input.style.height = 'auto';
+                input.style.height = input.scrollHeight + 'px';
+            };
 
             let cancelled = false;
 
@@ -548,8 +559,11 @@
                 renderTasks(column);
             };
 
+            input.addEventListener('input', autoResize);
+
             input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault(); // מונע ירידת שורה - Enter לבד שומר
                     input.blur();
                 } else if (e.key === 'Escape') {
                     cancelled = true;
@@ -559,6 +573,7 @@
             input.addEventListener('blur', commit);
 
             body.appendChild(input);
+            autoResize();
             input.focus();
         }
 
