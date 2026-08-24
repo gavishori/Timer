@@ -95,6 +95,22 @@
             display: none;
         }
 
+        .export-btn {
+            margin-top: 16px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .export-btn:hover {
+            background: rgba(255, 255, 255, 0.28);
+        }
+
         /* ---- עמודות המשימות (שני הצדדים) ---- */
         .task-column {
             background: rgba(255, 255, 255, 0.1);
@@ -343,6 +359,147 @@
                 font-size: 1.2rem;
             }
         }
+
+        /* ---- דוח PDF להדפסה - מוסתר במסך, מוצג רק ב-@media print ---- */
+        .print-report {
+            display: none;
+        }
+
+        @media print {
+            html, body {
+                height: auto;
+                overflow: visible;
+                background: #fff;
+                color: #111;
+            }
+
+            .container {
+                display: none;
+            }
+
+            .print-report {
+                display: block;
+                background: #fff;
+                color: #111;
+                padding: 0;
+                direction: rtl;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }
+
+            .print-report h1 {
+                font-size: 1.6rem;
+                margin: 0 0 4px 0;
+                color: #1e3c72;
+            }
+
+            .print-report .print-subtitle {
+                font-size: 0.9rem;
+                color: #555;
+                margin-bottom: 16px;
+            }
+
+            .print-report .print-countdown {
+                display: flex;
+                direction: ltr;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .print-report .print-countdown .unit {
+                border: 1px solid #ccc;
+                border-radius: 10px;
+                padding: 8px 14px;
+                text-align: center;
+                min-width: 70px;
+            }
+
+            .print-report .print-countdown .unit .value {
+                font-size: 1.4rem;
+                font-weight: 700;
+                font-family: "Lucida Console", "Courier New", monospace;
+            }
+
+            .print-report .print-countdown .unit .label {
+                font-size: 0.7rem;
+                color: #666;
+            }
+
+            .print-report section {
+                margin-bottom: 22px;
+                page-break-inside: avoid;
+            }
+
+            .print-report h2 {
+                font-size: 1.15rem;
+                border-bottom: 2px solid #2a5298;
+                padding-bottom: 4px;
+                margin: 0 0 10px 0;
+                color: #1e3c72;
+            }
+
+            .print-report .insights-box {
+                background: #eef3fc;
+                border: 1px solid #c9d9f2;
+                border-radius: 10px;
+                padding: 14px 16px;
+            }
+
+            .print-report .insights-box ul {
+                margin: 0;
+                padding-right: 18px;
+            }
+
+            .print-report .insights-box li {
+                margin-bottom: 6px;
+            }
+
+            .print-report .print-task-list {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .print-report .print-task-list li {
+                display: flex;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 6px 0;
+                border-bottom: 1px solid #eee;
+            }
+
+            .print-report .print-task-list .box {
+                flex-shrink: 0;
+                font-size: 1rem;
+            }
+
+            .print-report .print-task-list .body {
+                flex: 1;
+            }
+
+            .print-report .print-task-list .done .task-title {
+                text-decoration: line-through;
+                color: #888;
+            }
+
+            .print-report .print-task-list .note {
+                font-size: 0.82rem;
+                color: #666;
+                font-style: italic;
+                white-space: pre-wrap;
+            }
+
+            .print-report .print-empty {
+                color: #888;
+                font-size: 0.9rem;
+            }
+
+            .print-report .print-footer {
+                margin-top: 20px;
+                font-size: 0.75rem;
+                color: #999;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -383,6 +540,8 @@
             <div class="done-message" id="doneMessage">🎉 הגיע היום! בהצלחה במעבר! 🎉</div>
 
             <div class="target-date">היעד: 24.09.2026, 06:00</div>
+
+            <button type="button" id="exportPdfBtn" class="export-btn">📄 ייצוא סיכום PDF</button>
         </div>
 
         <div class="task-column" data-key="housework">
@@ -394,6 +553,9 @@
             <ul class="task-list"></ul>
         </div>
     </div>
+
+    <!-- מוצג רק בעת הדפסה / ייצוא PDF - מוזן דינמית ע"י buildReport() -->
+    <div class="print-report" id="printReport"></div>
 
     <script>
         // התאריך והשעה של המעבר: 24.09.2026, 06:00 לפי שעון ישראל (קיץ, UTC+3)
@@ -600,6 +762,142 @@
             });
 
             renderTasks(column);
+        });
+
+        // ---- ייצוא סיכום PDF (דרך דיאלוג ההדפסה של הדפדפן - "שמור כ-PDF") ----
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function getCountdownParts() {
+            const diff = targetDate.getTime() - new Date().getTime();
+            if (diff <= 0) return null;
+            const totalSeconds = Math.floor(diff / 1000);
+            return {
+                days: Math.floor(totalSeconds / 86400),
+                hours: Math.floor((totalSeconds % 86400) / 3600),
+                minutes: Math.floor((totalSeconds % 3600) / 60)
+            };
+        }
+
+        function buildInsights(tasksData, houseworkData, parts) {
+            const insights = [];
+
+            if (parts) {
+                insights.push(`נותרו ${parts.days} ימים ו-${parts.hours} שעות עד המעבר.`);
+            } else {
+                insights.push('🎉 תאריך המעבר כבר הגיע!');
+            }
+
+            const tOpen = tasksData.filter(t => !t.done).length;
+            const tDone = tasksData.length - tOpen;
+            const hOpen = houseworkData.filter(t => !t.done).length;
+            const hDone = houseworkData.length - hOpen;
+            const totalOpen = tOpen + hOpen;
+            const totalDone = tDone + hDone;
+            const totalAll = tasksData.length + houseworkData.length;
+
+            if (totalAll === 0) {
+                insights.push('עדיין לא נוספו משימות או עבודות בית.');
+                return insights;
+            }
+
+            const pct = Math.round((totalDone / totalAll) * 100);
+            insights.push(`בסך הכל הושלמו ${totalDone} מתוך ${totalAll} פריטים (${pct}%).`);
+
+            if (tasksData.length) {
+                insights.push(`משימות: ${tDone}/${tasksData.length} הושלמו (${Math.round((tDone / tasksData.length) * 100)}%).`);
+            }
+            if (houseworkData.length) {
+                insights.push(`עבודות בית: ${hDone}/${houseworkData.length} הושלמו (${Math.round((hDone / houseworkData.length) * 100)}%).`);
+            }
+
+            if (tOpen !== hOpen && tOpen > 0 && hOpen > 0) {
+                const bigger = hOpen > tOpen ? 'עבודות בית' : 'משימות';
+                const biggerCount = Math.max(tOpen, hOpen);
+                insights.push(`נשארו יותר פריטים פתוחים ב"${bigger}" (${biggerCount}) — אולי שווה להתמקד שם קודם.`);
+            }
+
+            if (parts && parts.days <= 14 && totalOpen > 0) {
+                insights.push(`⚠️ פחות משבועיים למעבר ועדיין יש ${totalOpen} פריטים פתוחים — כדאי להתחיל לתעדף.`);
+            }
+
+            if (totalOpen === 0) {
+                insights.push('🎉 כל הפריטים הושלמו — מוכנים למעבר!');
+            }
+
+            return insights;
+        }
+
+        function buildTaskListHtml(tasks) {
+            if (!tasks.length) {
+                return '<div class="print-empty">אין פריטים ברשימה הזו</div>';
+            }
+            const sorted = [...tasks].sort((a, b) => Number(a.done) - Number(b.done));
+            const rows = sorted.map(t => {
+                const box = t.done ? '☑' : '☐';
+                const noteHtml = (t.note && t.note.trim())
+                    ? `<div class="note">${escapeHtml(t.note)}</div>`
+                    : '';
+                return `<li class="${t.done ? 'done' : ''}">
+                    <span class="box">${box}</span>
+                    <div class="body">
+                        <div class="task-title">${escapeHtml(t.text)}</div>
+                        ${noteHtml}
+                    </div>
+                </li>`;
+            }).join('');
+            return `<ul class="print-task-list">${rows}</ul>`;
+        }
+
+        function buildReport() {
+            const tasksData = loadTasks('tasks');
+            const houseworkData = loadTasks('housework');
+            const parts = getCountdownParts();
+            const insights = buildInsights(tasksData, houseworkData, parts);
+
+            const countdownHtml = parts ? `
+                <div class="print-countdown">
+                    <div class="unit"><div class="value">${String(parts.days).padStart(2, '0')}</div><div class="label">ימים</div></div>
+                    <div class="unit"><div class="value">${String(parts.hours).padStart(2, '0')}</div><div class="label">שעות</div></div>
+                    <div class="unit"><div class="value">${String(parts.minutes).padStart(2, '0')}</div><div class="label">דקות</div></div>
+                </div>` : '';
+
+            const generatedStr = new Date().toLocaleString('he-IL', { dateStyle: 'long', timeStyle: 'short' });
+
+            const report = document.getElementById('printReport');
+            report.innerHTML = `
+                <h1>עוברים לאבן יהודה 🏡</h1>
+                <div class="print-subtitle">סיכום שהופק ב-${generatedStr} | יעד המעבר: 24.09.2026, 06:00</div>
+
+                ${countdownHtml}
+
+                <section>
+                    <h2>💡 תובנות</h2>
+                    <div class="insights-box">
+                        <ul>${insights.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+                    </div>
+                </section>
+
+                <section>
+                    <h2>משימות</h2>
+                    ${buildTaskListHtml(tasksData)}
+                </section>
+
+                <section>
+                    <h2>עבודות בית</h2>
+                    ${buildTaskListHtml(houseworkData)}
+                </section>
+
+                <div class="print-footer">נוצר אוטומטית מתוך "עוברים לאבן יהודה"</div>
+            `;
+        }
+
+        document.getElementById('exportPdfBtn').addEventListener('click', () => {
+            buildReport();
+            window.print();
         });
     </script>
 
