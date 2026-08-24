@@ -89,6 +89,13 @@
             color: #cfe0ff;
         }
 
+        .sync-status {
+            font-size: 0.7rem;
+            color: #9fb4dd;
+            margin-top: 4px;
+            min-height: 1em;
+        }
+
         .done-message {
             font-size: 1.6rem;
             font-weight: 700;
@@ -545,6 +552,8 @@
 
             <div class="target-date">היעד: 24.09.2026, 06:00</div>
 
+            <div class="sync-status" id="syncStatus"></div>
+
             <button type="button" id="exportPdfBtn" class="export-btn">📄 ייצוא סיכום PDF</button>
         </div>
 
@@ -595,8 +604,17 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
-        // ---- טבלת משימות ----
-        function loadTasks(key) {
+        // ---- טבלת משימות, מסונכרנת בענן דרך Firebase Realtime Database ----
+        // localStorage משמש כקאש מקומי מיידי (טעינה מהירה + עבודה גם בלי אינטרנט);
+        // Firebase הוא "מקור האמת" שמסנכרן בין כל המכשירים בזמן אמת.
+        const FIREBASE_BASE = 'https://timer-4672a-default-rtdb.europe-west1.firebasedatabase.app';
+        const FIREBASE_APP_PATH = 'app-1b3c84cf218410393163a85b';
+
+        function firebaseUrl(key) {
+            return `${FIREBASE_BASE}/${FIREBASE_APP_PATH}/${key}.json`;
+        }
+
+        function readLocalCache(key) {
             try {
                 const raw = localStorage.getItem('tasks-' + key);
                 return raw ? JSON.parse(raw) : [];
@@ -605,8 +623,28 @@
             }
         }
 
+        // מצב חי בזיכרון - נטען מהקאש המקומי מיד, ומתעדכן מ-Firebase ברגע שהחיבור מגיע
+        const tasksState = {
+            tasks: readLocalCache('tasks'),
+            housework: readLocalCache('housework')
+        };
+
+        function loadTasks(key) {
+            return tasksState[key] || [];
+        }
+
         function saveTasks(key, tasks) {
+            tasksState[key] = tasks;
             localStorage.setItem('tasks-' + key, JSON.stringify(tasks));
+
+            fetch(firebaseUrl(key), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tasks)
+            }).catch(err => {
+                console.error('סנכרון לענן נכשל (נשמר מקומית בלבד):', err);
+                setSyncStatus(false);
+            });
         }
 
         function renderTasks(column) {
@@ -767,6 +805,84 @@
 
             renderTasks(column);
         });
+
+        // ---- סנכרון חי בין מכשירים (Firebase Realtime Database) ----
+        function setSyncStatus(ok, connecting) {
+            const el = document.getElementById('syncStatus');
+            if (!el) return;
+            if (connecting) {
+                el.textContent = '☁️ מתחבר לסנכרון...';
+            } else if (ok) {
+                el.textContent = '☁️ מסונכרן בין המכשירים';
+            } else {
+                el.textContent = '⚠️ לא מחובר לסנכרון - עובד מקומית';
+            }
+        }
+
+        // מונע דריסת עריכה פעילה (הקלדת משימה/הערה) כשמגיע עדכון מרחוק ממכשיר אחר
+        function isEditing(column) {
+            const noteInput = column.querySelector('.note-input');
+            if (noteInput) return true;
+            const addInput = column.querySelector('.add-task input');
+            return document.activeElement === addInput && addInput.value.trim() !== '';
+        }
+
+        function connectSync(key, column) {
+            let es;
+            let firstEvent = true;
+
+            try {
+                es = new EventSource(firebaseUrl(key));
+            } catch (e) {
+                setSyncStatus(false);
+                return;
+            }
+
+            const applyRemoteValue = (value) => {
+                const list = Array.isArray(value) ? value : (value ? Object.values(value) : []);
+                tasksState[key] = list;
+                localStorage.setItem('tasks-' + key, JSON.stringify(list));
+                if (!isEditing(column)) {
+                    renderTasks(column);
+                }
+            };
+
+            es.addEventListener('put', (e) => {
+                setSyncStatus(true);
+                try {
+                    const parsed = JSON.parse(e.data);
+                    const remoteIsEmpty = !parsed.data || (Array.isArray(parsed.data) && parsed.data.length === 0);
+
+                    // בהתחברות הראשונה: אם בענן עוד אין כלום אבל יש כבר משימות מקומיות
+                    // (למשל שנוספו לפני שהוגדר הסנכרון) - מעלים אותן לענן במקום למחוק אותן
+                    if (firstEvent && remoteIsEmpty && tasksState[key] && tasksState[key].length) {
+                        saveTasks(key, tasksState[key]);
+                    } else {
+                        applyRemoteValue(parsed.data);
+                    }
+                    firstEvent = false;
+                } catch (err) {
+                    console.error('שגיאה בפענוח עדכון מ-Firebase:', err);
+                }
+            });
+
+            // "patch" מגיע בעדכונים חלקיים - אצלנו כל שמירה כותבת את הרשימה כולה,
+            // אז אם בכל זאת מתקבל patch (למשל מעריכה ידנית בקונסולת Firebase), פשוט נטען מחדש
+            es.addEventListener('patch', () => {
+                fetch(firebaseUrl(key))
+                    .then(r => r.json())
+                    .then(applyRemoteValue)
+                    .catch(() => {});
+            });
+
+            es.onerror = () => {
+                setSyncStatus(false);
+            };
+        }
+
+        setSyncStatus(false, true);
+        connectSync('tasks', document.querySelector('.task-column[data-key="tasks"]'));
+        connectSync('housework', document.querySelector('.task-column[data-key="housework"]'));
 
         // ---- ייצוא סיכום PDF (דרך דיאלוג ההדפסה של הדפדפן - "שמור כ-PDF") ----
         function escapeHtml(str) {
