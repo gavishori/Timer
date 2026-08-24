@@ -187,11 +187,25 @@
 
         .task-list li {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
             background: rgba(255, 255, 255, 0.08);
             border-radius: 12px;
             padding: 14px 14px;
+        }
+
+        .task-list li .task-body {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .task-list li .task-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .task-list li .task-text {
@@ -215,6 +229,46 @@
             cursor: pointer;
             flex-shrink: 0;
             accent-color: #4CAF50;
+            margin-top: 2px;
+        }
+
+        .task-list li .note-btn {
+            background: none;
+            border: none;
+            color: #cfe0ff;
+            font-size: 0.95rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            line-height: 1;
+            padding: 3px 7px;
+            border-radius: 6px;
+        }
+
+        .task-list li .note-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .task-list li .note-btn.has-note {
+            color: #ffd166;
+        }
+
+        .task-list li .task-note-text {
+            font-size: 0.82rem;
+            font-style: italic;
+            color: #b8c6e0;
+            word-break: break-word;
+            cursor: pointer;
+        }
+
+        .task-list li .note-input {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            font-size: 0.9rem;
         }
 
         .task-list li .delete-task {
@@ -421,9 +475,39 @@
                     renderTasks(column);
                 });
 
+                // --- גוף המשימה: שורת הטקסט + כפתור הערה, ומתחתיה ההערה עצמה (אם יש) ---
+                const body = document.createElement('div');
+                body.className = 'task-body';
+
+                const row = document.createElement('div');
+                row.className = 'task-row';
+
                 const span = document.createElement('span');
                 span.className = 'task-text';
                 span.textContent = task.text;
+
+                const noteBtn = document.createElement('button');
+                noteBtn.type = 'button';
+                noteBtn.className = 'note-btn';
+                const hasNote = !!(task.note && task.note.trim());
+                if (hasNote) noteBtn.classList.add('has-note');
+                noteBtn.textContent = hasNote ? '✎' : '+';
+                noteBtn.title = hasNote ? 'ערוך הערה' : 'הוסף הערה';
+
+                row.appendChild(span);
+                row.appendChild(noteBtn);
+                body.appendChild(row);
+
+                if (hasNote) {
+                    const noteText = document.createElement('div');
+                    noteText.className = 'task-note-text';
+                    noteText.textContent = task.note;
+                    noteText.title = 'לחצו לעריכת ההערה';
+                    noteText.addEventListener('click', () => startNoteEdit(body, task, key, tasks, column));
+                    body.appendChild(noteText);
+                }
+
+                noteBtn.addEventListener('click', () => startNoteEdit(body, task, key, tasks, column));
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
@@ -438,10 +522,44 @@
                 });
 
                 li.appendChild(checkbox);
-                li.appendChild(span);
+                li.appendChild(body);
                 li.appendChild(deleteBtn);
                 listEl.appendChild(li);
             });
+        }
+
+        // פותח שדה עריכה מקומי להערה של משימה ספציפית, בלי לרנדר מחדש את כל הרשימה
+        function startNoteEdit(body, task, key, tasks, column) {
+            body.innerHTML = '';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'note-input';
+            input.maxLength = 300;
+            input.value = task.note || '';
+            input.placeholder = 'הערה...';
+
+            let cancelled = false;
+
+            const commit = () => {
+                if (cancelled) return;
+                task.note = input.value.trim();
+                saveTasks(key, tasks);
+                renderTasks(column);
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    cancelled = true;
+                    renderTasks(column);
+                }
+            });
+            input.addEventListener('blur', commit);
+
+            body.appendChild(input);
+            input.focus();
         }
 
         function addTask(column) {
