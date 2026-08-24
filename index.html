@@ -231,12 +231,23 @@
             color: #ff6b6b;
         }
 
-        /* מסכים צרים: הכל נערם אנכית - משימות למעלה, טיימר, עבודות בית למטה */
+        /* מובייל: הכל נערם אנכית (משימות, טיימר, עבודות בית), והדף עצמו גולל -
+           אין נעילת גובה, וכל רשימת משימות גדלה לפי התוכן שלה */
         @media (max-width: 820px) {
+            html, body {
+                height: auto;
+                min-height: 100%;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+
             .container {
+                height: auto;
+                min-height: 100vh;
                 flex-direction: column;
+                align-items: stretch;
                 padding: 14px;
-                gap: 12px;
+                gap: 14px;
             }
 
             .center-panel {
@@ -245,7 +256,15 @@
             }
 
             .task-column {
-                flex: 1 1 0;
+                flex: 0 0 auto;
+                min-height: 0;
+            }
+
+            .task-list {
+                flex: 0 0 auto;
+                min-height: 0;
+                max-height: none;
+                overflow-y: visible;
             }
 
             h1 {
