@@ -3,325 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flymily - פזורים בעולם, מאוחדים בלב</title>
+    <title>עוברים לאבן יהודה</title>
     <style>
-        /* * סגנון (CSS)
-         */
-        
+        * {
+            box-sizing: border-box;
+        }
+
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* מונע גלילה אנכית ואופקית */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
         }
 
         .container {
-            width: 100%;
-            height: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 15px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            /* *** שינוי כאן (מרווח A) ***
-              ה-padding העליון הוקטן מ-15px ל-5px 
-            */
-            padding: 5px 25px 15px 25px; 
-            box-sizing: border-box;
+            min-height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            text-align: center;
         }
 
         h1 {
-            text-align: center;
-            color: #2196F3;
-            margin-top: 0;
-            /* ה-margin מתחת לכותרת כולה צומצם */
-            margin-bottom: 10px; 
-            font-size: 1.8rem;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .logo-image {
-            height: 240px;
-            width: auto;
-            /* *** שינוי כאן (מרווח B) ***
-              ה-margin מתחת ללוגו הוקטן מ-5px ל-2px
-            */
-            margin-bottom: 2px; 
-        }
-
-        .logo-text {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #2196F3;
-        }
-
-
-        .clock-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 15px;
-            flex-shrink: 0;
-        }
-
-        .clock-item {
-            background-color: #e3f2fd;
-            border-radius: 12px;
-            border: 1px solid #bbdefb;
-            padding: 10px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-            align-items: center;
-        }
-
-        .clock-item .right-side {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 2px;
-        }
-
-        .clock-item .flag {
-            font-size: 3rem;
-            line-height: 1;
-        }
-        
-        .clock-item .city-name {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #3f51b5;
-        }
-
-        .clock-item .timeline-text {
-            font-size: 0.8rem;
-            font-style: italic;
-            color: #555;
-        }
-        
-        .clock-item .date {
-            font-size: 0.85rem;
-            color: #607d8b;
-        }
-
-        .clock-item .left-side {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .clock-item .time {
-            font-size: 2rem;
+            font-size: 2.2rem;
+            margin: 0 0 8px 0;
             font-weight: 700;
-            color: #0d47a1;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #cfe0ff;
+            margin-bottom: 40px;
+        }
+
+        .countdown {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .unit {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 18px;
+            padding: 20px 22px;
+            min-width: 100px;
+            backdrop-filter: blur(6px);
+        }
+
+        .unit .value {
+            font-size: 2.6rem;
+            font-weight: 700;
             font-family: "Lucida Console", "Courier New", monospace;
             line-height: 1;
         }
 
-        .clock-item .weather {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #4CAF50;
-            white-space: nowrap;
+        .unit .label {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #cfe0ff;
         }
 
-        .notes-area {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            border-top: 1px solid #e0e0e0;
-            padding-top: 10px;
-            margin-top: 10px;
-            min-height: 60px;
-        }
-        
-        .notes-area label {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #424242;
-            flex-shrink: 0;
+        .target-date {
+            font-size: 0.95rem;
+            color: #cfe0ff;
         }
 
-        #notes {
-            width: 100%;
-            flex-grow: 1;
-            padding: 10px;
-            font-family: inherit;
-            font-size: 1rem;
-            border: 1px solid #bdbdbd;
-            border-radius: 10px;
-            resize: none;
-            box-sizing: border-box;
-            background-color: #fcfcfc;
+        .done-message {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: none;
         }
-        
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>
-            <img src="לוגו שקוף Flymily.png" alt="Flymily Logo" class="logo-image">
-            <span class="logo-text">פזורים בעולם, מאוחדים בלב</span>
-        </h1>
+        <h1>עוברים לאבן יהודה 🏡</h1>
+        <div class="subtitle">הספירה לאחור למעבר הגדול</div>
 
-        <div class="clock-list">
-            
-            <div class="clock-item">
-                <div class="right-side">
-                    <span class="flag" aria-label="דגל ארהב">🇺🇸</span>
-                    <span class="city-name">סיאטל</span>
-                    <span class="timeline-text">עבר</span>
-                    <span class="date" id="date-us">טוען תאריך...</span>
-                </div>
-                <div class="left-side">
-                    <span class="time" id="time-us">00:00:00</span>
-                    <span class="weather" id="weather-us">--°C</span>
-                </div>
+        <div class="countdown" id="countdown">
+            <div class="unit">
+                <div class="value" id="days">00</div>
+                <div class="label">ימים</div>
             </div>
-
-            <div class="clock-item">
-                <div class="right-side">
-                    <span class="flag" aria-label="דגל ישראל">🇮🇱</span>
-                    <span class="city-name">ישראל</span>
-                    <span class="timeline-text">הווה</span>
-                    <span class="date" id="date-il">טוען תאריך...</span>
-                </div>
-                <div class="left-side">
-                    <span class="time" id="time-il">00:00:00</span>
-                    <span class="weather" id="weather-il">--°C</span>
-                </div>
+            <div class="unit">
+                <div class="value" id="hours">00</div>
+                <div class="label">שעות</div>
             </div>
-
-            <div class="clock-item">
-                <div class="right-side">
-                    <span class="flag" aria-label="דגל תאילנד">🇹🇭</span>
-                    <span class="city-name">תאילנד</span>
-                    <span class="timeline-text">עתיד</span>
-                    <span class="date" id="date-th">טוען תאריך...</span>
-                </div>
-                <div class="left-side">
-                    <span class="time" id="time-th">00:00:00</span>
-                    <span class="weather" id="weather-th">--°C</span>
-                </div>
+            <div class="unit">
+                <div class="value" id="minutes">00</div>
+                <div class="label">דקות</div>
             </div>
-
+            <div class="unit">
+                <div class="value" id="seconds">00</div>
+                <div class="label">שניות</div>
+            </div>
         </div>
 
-        <div class="notes-area">
-            <label for="notes">✍️ פתקים:</label>
-            <textarea id="notes" placeholder="כתוב משהו... לחיצה על Enter תרד שורה (אין שמירה)."></textarea>
-        </div>
+        <div class="done-message" id="doneMessage">🎉 הגיע היום! בהצלחה במעבר! 🎉</div>
+
+        <div class="target-date">היעד: 24.09.2026, 06:00</div>
     </div>
 
     <script>
-        const locations = [
-            {
-                name: 'סיאטל',
-                tz: 'America/Los_Angeles',
-                weatherCity: 'Seattle',
-                timeEl: 'time-us',
-                dateEl: 'date-us',
-                weatherEl: 'weather-us'
-            },
-            {
-                name: 'ישראל',
-                tz: 'Asia/Jerusalem',
-                weatherCity: 'Jerusalem',
-                timeEl: 'time-il',
-                dateEl: 'date-il',
-                weatherEl: 'weather-il'
-            },
-            {
-                name: 'תאילנד',
-                tz: 'Asia/Bangkok',
-                weatherCity: 'Bangkok',
-                timeEl: 'time-th',
-                dateEl: 'date-th',
-                weatherEl: 'weather-th'
-            }
-        ];
+        // התאריך והשעה של המעבר: 24.09.2026, 06:00 לפי שעון ישראל (קיץ, UTC+3)
+        // הכתיבה עם היסט מפורש (+03:00) מבטיחה שהספירה תהיה מדויקת
+        // גם אם הדף נפתח ממכשיר שנמצא באזור זמן אחר
+        const targetDate = new Date('2026-09-24T06:00:00+03:00');
 
-        function updateClocks() {
+        function updateCountdown() {
             const now = new Date();
+            const diff = targetDate.getTime() - now.getTime();
 
-            locations.forEach(loc => {
-                const timeOptions = {
-                    timeZone: loc.tz,
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit',
-                    hour12: false
-                };
-                
-                const dateOptions = {
-                    timeZone: loc.tz,
-                    day: 'numeric',
-                    month: 'short',
-                };
-                
-                const timeString = now.toLocaleTimeString('he-IL', timeOptions);
-                const dateString = now.toLocaleDateString('he-IL', dateOptions);
-                
-                const timeEl = document.getElementById(loc.timeEl);
-                const dateEl = document.getElementById(loc.dateEl);
-                
-                if (timeEl) timeEl.textContent = timeString;
-                if (dateEl) dateEl.textContent = dateString;
-            });
-        }
+            const countdownEl = document.getElementById('countdown');
+            const doneEl = document.getElementById('doneMessage');
 
-        async function fetchWeather() {
-            for (const loc of locations) {
-                const el = document.getElementById(loc.weatherEl);
-                if (!el) continue;
-
-                el.textContent = 'טוען...';
-
-                try {
-                    const url = `https://wttr.in/${loc.weatherCity}?format=j1`;
-                    const response = await fetch(url);
-                    
-                    if (!response.ok) {
-                        throw new Error(`שגיאת רשת: ${response.statusText}`);
-                    }
-                    
-                    const data = await response.json();
-                    
-                    const temp = data.current_condition[0].temp_C;
-                    
-                    el.textContent = `${temp}°C`;
-
-                } catch (error) {
-                    console.error(`שגיאה בקבלת מזג אוויר עבור ${loc.name}:`, error);
-                    el.textContent = 'שגיאה';
-                }
+            if (diff <= 0) {
+                countdownEl.style.display = 'none';
+                doneEl.style.display = 'block';
+                return;
             }
+
+            const totalSeconds = Math.floor(diff / 1000);
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            document.getElementById('days').textContent = String(days).padStart(2, '0');
+            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
         }
 
-        function init() {
-            updateClocks();
-            setInterval(updateClocks, 1000);
-
-            fetchWeather();
-            setInterval(fetchWeather, 1800000); // כל 30 דקות
-        }
-
-        document.addEventListener('DOMContentLoaded', init);
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
     </script>
 
 </body>
