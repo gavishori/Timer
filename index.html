@@ -724,6 +724,8 @@
                 deleteBtn.textContent = '✕';
                 deleteBtn.title = 'מחק משימה';
                 deleteBtn.addEventListener('click', () => {
+                    if (!confirm(`למחוק את "${task.text}"? לא ניתן לשחזר.`)) return;
+
                     const idx = tasks.indexOf(task);
                     if (idx > -1) tasks.splice(idx, 1);
                     saveTasks(key, tasks);
@@ -770,6 +772,14 @@
                     e.preventDefault(); // מונע ירידת שורה - Enter לבד שומר
                     input.blur();
                 } else if (e.key === 'Escape') {
+                    const originalNote = task.note || '';
+                    const hasUnsavedChanges = input.value.trim() !== originalNote.trim();
+
+                    // אזהרה לפני מחיקת שינויים שלא נשמרו - רק אם באמת יש מה לאבד
+                    if (hasUnsavedChanges && !confirm('יש שינויים שלא נשמרו בהערה. לבטל ולאבד אותם?')) {
+                        return;
+                    }
+
                     cancelled = true;
                     renderTasks(column);
                 }
