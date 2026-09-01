@@ -164,16 +164,49 @@
             border-radius: 8px;
         }
 
-        .tl-month {
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: #ffd166;
-            letter-spacing: 0.03em;
-            margin: 14px 0 6px;
+        .tl-month-group {
+            margin-bottom: 4px;
         }
 
-        .tl-month:first-child {
+        .tl-month-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: none;
+            border: none;
+            color: #ffd166;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            font-family: inherit;
+            cursor: pointer;
+            padding: 6px 6px;
+            margin-top: 10px;
+            border-radius: 8px;
+        }
+
+        .tl-month-header:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .tl-month-group:first-child .tl-month-header {
             margin-top: 0;
+        }
+
+        .tl-month-arrow {
+            font-size: 0.65rem;
+            color: #cfe0ff;
+            font-weight: 400;
+        }
+
+        .tl-month-content {
+            display: none;
+            padding-top: 4px;
+        }
+
+        .tl-month-group.open .tl-month-content {
+            display: block;
         }
 
         .tl-entry {
@@ -1229,6 +1262,14 @@
             return new Date(y, m - 1, d);
         }
 
+        function monthKeyOf(date) {
+            return date.getFullYear() + '-' + date.getMonth();
+        }
+
+        // אילו חודשים פתוחים כרגע (Set של מפתחות 'YYYY-M'). נשאר null עד הבנייה הראשונה,
+        // ואז נשמר בין רענונים (כולל סנכרון חי מהגיליון) כדי לא לאבד למשתמש מה שהוא פתח/סגר ידנית
+        let openMonths = null;
+
         function buildTimeline() {
             const wrap = document.getElementById('timelineWrap');
             if (!wrap) return;
@@ -1246,16 +1287,25 @@
             // הרשומה הראשונה שתאריכה עדיין לא עבר - "הקרוב ביותר", ומשמשת גם עוגן לגלילה אוטומטית
             const nextIndex = TIMELINE_DATA.findIndex(([dateStr]) => parseSheetDate(dateStr) >= today);
 
-            let html = '';
-            let currentMonthKey = null;
+            // ברירת מחדל: רק החודש הנוכחי והחודש הבא פתוחים. נקבע פעם אחת בלבד -
+            // פתיחה/סגירה ידנית של המשתמש לא נדרסת ברענונים הבאים
+            if (openMonths === null) {
+                openMonths = new Set();
+                openMonths.add(monthKeyOf(today));
+                openMonths.add(monthKeyOf(new Date(today.getFullYear(), today.getMonth() + 1, 1)));
+            }
+
+            // קיבוץ הרשומות לפי חודש, בסדר כרונולוגי
+            const groups = [];
+            let currentGroup = null;
 
             TIMELINE_DATA.forEach(([dateStr, dayName, items], i) => {
                 const d = parseSheetDate(dateStr);
-                const monthKey = d.getFullYear() + '-' + d.getMonth();
+                const monthKey = monthKeyOf(d);
 
-                if (monthKey !== currentMonthKey) {
-                    currentMonthKey = monthKey;
-                    html += `<div class="tl-month">${HEBREW_MONTHS[d.getMonth()]} ${d.getFullYear()}</div>`;
+                if (!currentGroup || currentGroup.key !== monthKey) {
+                    currentGroup = { key: monthKey, label: `${HEBREW_MONTHS[d.getMonth()]} ${d.getFullYear()}`, entriesHtml: [] };
+                    groups.push(currentGroup);
                 }
 
                 const isNext = i === nextIndex;
@@ -1266,19 +1316,45 @@
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const itemsHtml = items.map(it => `<li>${escapeHtml(it)}</li>`).join('');
 
-                html += `
+                currentGroup.entriesHtml.push(`
                     <div class="tl-entry ${stateClass}">
                         <div class="tl-rail"></div>
                         <div class="tl-content">
                             <div class="tl-date">${dd}.${mm} <span class="tl-day">${escapeHtml(dayName)}</span></div>
                             <ul class="tl-items">${itemsHtml}</ul>
                         </div>
-                    </div>`;
+                    </div>`);
             });
 
-            wrap.innerHTML = html;
+            wrap.innerHTML = groups.map(g => {
+                const isOpen = openMonths.has(g.key);
+                return `
+                    <div class="tl-month-group ${isOpen ? 'open' : ''}" data-month-key="${g.key}">
+                        <button type="button" class="tl-month-header">
+                            <span>${g.label}</span>
+                            <span class="tl-month-arrow">${isOpen ? '▾' : '▸'}</span>
+                        </button>
+                        <div class="tl-month-content">${g.entriesHtml.join('')}</div>
+                    </div>`;
+            }).join('');
+
+            // לחיצה על כותרת חודש פותחת/סוגרת אותו, ושומרת את הבחירה ל-openMonths
+            wrap.querySelectorAll('.tl-month-header').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const group = btn.closest('.tl-month-group');
+                    const key = group.dataset.monthKey;
+                    const willOpen = !group.classList.contains('open');
+
+                    group.classList.toggle('open', willOpen);
+                    btn.querySelector('.tl-month-arrow').textContent = willOpen ? '▾' : '▸';
+
+                    if (willOpen) openMonths.add(key);
+                    else openMonths.delete(key);
+                });
+            });
 
             // גלילה אוטומטית כדי שהאירוע הקרוב ביותר יופיע בראש התצוגה עם פתיחת הדף
+            // (עובד כי החודש שלו פתוח כברירת מחדל - הוא החודש הנוכחי או הבא)
             const nextEl = wrap.querySelector('.tl-entry.is-next');
             if (nextEl) {
                 wrap.scrollTop = Math.max(0, nextEl.offsetTop - 10);
