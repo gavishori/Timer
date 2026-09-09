@@ -495,6 +495,16 @@
             cursor: pointer;
         }
 
+        .task-list li .task-note-text a {
+            color: #8bc0ff;
+            font-style: normal;
+            text-decoration: underline;
+        }
+
+        .task-list li .task-note-text a:hover {
+            color: #b3d7ff;
+        }
+
         .task-list li .note-input {
             width: 100%;
             padding: 6px 10px;
@@ -933,9 +943,12 @@
                 if (hasNote) {
                     const noteText = document.createElement('div');
                     noteText.className = 'task-note-text';
-                    noteText.textContent = task.note;
+                    noteText.innerHTML = linkifyText(task.note);
                     noteText.title = 'לחצו לעריכת ההערה';
-                    noteText.addEventListener('click', () => startNoteEdit(body, task, key, tasks, column));
+                    noteText.addEventListener('click', (e) => {
+                        if (e.target.tagName === 'A') return; // לוחצים על קישור - נותנים לו להיפתח, לא נכנסים לעריכה
+                        startNoteEdit(body, task, key, tasks, column);
+                    });
                     body.appendChild(noteText);
                 }
 
@@ -1124,6 +1137,27 @@
             return div.innerHTML;
         }
 
+        // הופך קישורים בטקסט (http/https או www.) לקישורים לחיצים שנפתחים בכרטיסייה חדשה.
+        // עובד על הטקסט אחרי escapeHtml, כך שהתוצאה בטוחה להצגה כ-innerHTML.
+        function linkifyText(str) {
+            const escaped = escapeHtml(str);
+            const urlRegex = /((?:https?:\/\/|www\.)[^\s<]+)/g;
+
+            return escaped.replace(urlRegex, (match) => {
+                // מנקה סימני פיסוק שנדבקו בטעות בסוף הקישור (נקודה, פסיק, סוגריים וכו')
+                let url = match;
+                let trailing = '';
+                const trailingMatch = url.match(/[.,;:!?)\]]+$/);
+                if (trailingMatch) {
+                    trailing = trailingMatch[0];
+                    url = url.slice(0, -trailing.length);
+                }
+
+                const href = url.startsWith('http') ? url : `https://${url}`;
+                return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>${trailing}`;
+            });
+        }
+
         function getCountdownParts() {
             const diff = targetDate.getTime() - new Date().getTime();
             if (diff <= 0) return null;
@@ -1192,7 +1226,7 @@
             const rows = sorted.map(t => {
                 const box = t.done ? '☑' : '☐';
                 const noteHtml = (t.note && t.note.trim())
-                    ? `<div class="note">${escapeHtml(t.note)}</div>`
+                    ? `<div class="note">${linkifyText(t.note)}</div>`
                     : '';
                 return `<li class="${t.done ? 'done' : ''}">
                     <span class="box">${box}</span>
