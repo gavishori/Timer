@@ -775,7 +775,7 @@
                 <div class="done-message" id="doneMessage">🎉 הגיע היום! בהצלחה במעבר! 🎉</div>
 
                 <div class="center-meta">
-                    <span class="target-date">היעד: 24.09.2026, 06:00</span>
+                    <span class="target-date">היעד: 28.09.2026, 06:00</span>
                     <span class="sync-status" id="syncStatus"></span>
                 </div>
 
@@ -804,10 +804,10 @@
     <div class="print-report" id="printReport"></div>
 
     <script>
-        // התאריך והשעה של המעבר: 24.09.2026, 06:00 לפי שעון ישראל (קיץ, UTC+3)
+        // התאריך והשעה של המעבר: 28.09.2026, 06:00 לפי שעון ישראל (קיץ, UTC+3)
         // הכתיבה עם היסט מפורש (+03:00) מבטיחה שהספירה תהיה מדויקת
         // גם אם הדף נפתח ממכשיר שנמצא באזור זמן אחר
-        const targetDate = new Date('2026-09-24T06:00:00+03:00');
+        const targetDate = new Date('2026-09-28T06:00:00+03:00');
 
         function updateCountdown() {
             const now = new Date();
@@ -1257,7 +1257,7 @@
             const report = document.getElementById('printReport');
             report.innerHTML = `
                 <h1>עוברים לאבן יהודה 🏡</h1>
-                <div class="print-subtitle">סיכום שהופק ב-${generatedStr} | יעד המעבר: 24.09.2026, 06:00</div>
+                <div class="print-subtitle">סיכום שהופק ב-${generatedStr} | יעד המעבר: 28.09.2026, 06:00</div>
 
                 ${countdownHtml}
 
