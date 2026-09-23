@@ -164,49 +164,19 @@
             border-radius: 8px;
         }
 
-        .tl-month-group {
-            margin-bottom: 4px;
-        }
-
-        .tl-month-header {
+        .month-select {
             width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: none;
-            border: none;
-            color: #ffd166;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.03em;
+            flex-shrink: 0;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            font-size: 0.85rem;
+            font-weight: 600;
             font-family: inherit;
             cursor: pointer;
-            padding: 6px 6px;
-            margin-top: 10px;
-            border-radius: 8px;
-        }
-
-        .tl-month-header:hover {
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .tl-month-group:first-child .tl-month-header {
-            margin-top: 0;
-        }
-
-        .tl-month-arrow {
-            font-size: 0.65rem;
-            color: #cfe0ff;
-            font-weight: 400;
-        }
-
-        .tl-month-content {
-            display: none;
-            padding-top: 4px;
-        }
-
-        .tl-month-group.open .tl-month-content {
-            display: block;
+            margin-bottom: 8px;
         }
 
         .tl-entry {
@@ -304,6 +274,65 @@
             font-size: 0.85rem;
             text-align: center;
             padding: 20px 0;
+        }
+
+        /* ---- מחשבון תשואה ---- */
+        .yield-calc {
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-top: 10px;
+        }
+
+        .yield-calc h3 {
+            margin: 0 0 8px 0;
+            font-size: 0.85rem;
+            color: #cfe0ff;
+            text-align: center;
+        }
+
+        .yield-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .yield-row label {
+            font-size: 0.75rem;
+            color: #cfe0ff;
+            flex-shrink: 0;
+        }
+
+        .yield-row input {
+            flex: 1;
+            min-width: 0;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            font-size: 0.85rem;
+            text-align: left;
+            direction: ltr;
+        }
+
+        .yield-result {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #8bc34a;
+        }
+
+        .yield-result .yield-label {
+            font-size: 0.72rem;
+            font-weight: 400;
+            color: #cfe0ff;
+            display: block;
         }
 
         .done-message {
@@ -787,7 +816,24 @@
                 <button type="button" id="timelineRefreshBtn" class="tl-refresh-btn" title="רענן מהגיליון החי">🔄</button>
             </div>
             <div class="tl-sync-status" id="timelineSyncStatus"></div>
+            <select class="month-select" id="monthSelect"></select>
             <div class="timeline-wrap" id="timelineWrap"></div>
+
+            <div class="yield-calc">
+                <h3>💰 מחשבון תשואה</h3>
+                <div class="yield-row">
+                    <label for="yieldPrice">מחיר קניית דירה (₪)</label>
+                    <input type="number" id="yieldPrice" placeholder="1,800,000" min="0" step="1000">
+                </div>
+                <div class="yield-row">
+                    <label for="yieldRent">שכ"ד חודשי (₪)</label>
+                    <input type="number" id="yieldRent" placeholder="5,500" min="0" step="50">
+                </div>
+                <div class="yield-result" id="yieldResult">
+                    <span class="yield-label">תשואה שנתית</span>
+                    —
+                </div>
+            </div>
         </div>
 
         <div class="task-column" data-key="housework">
@@ -1300,64 +1346,35 @@
             return date.getFullYear() + '-' + date.getMonth();
         }
 
-        // אילו חודשים פתוחים כרגע (Set של מפתחות 'YYYY-M'). נשאר null עד הבנייה הראשונה,
-        // ואז נשמר בין רענונים (כולל סנכרון חי מהגיליון) כדי לא לאבד למשתמש מה שהוא פתח/סגר ידנית.
-        // המצב גם נשמר ב-localStorage, כך שברירת המחדל בפעם הבאה שהדף נפתח היא בדיוק
-        // מה שהיה פתוח/סגור בפעם האחרונה (ולא תמיד "החודש הנוכחי + הבא").
-        let openMonths = null;
-        const OPEN_MONTHS_STORAGE_KEY = 'tl-open-months';
-
-        function loadOpenMonthsFromStorage() {
-            try {
-                const raw = localStorage.getItem(OPEN_MONTHS_STORAGE_KEY);
-                if (!raw) return null;
-                const arr = JSON.parse(raw);
-                return Array.isArray(arr) ? new Set(arr) : null;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        function saveOpenMonthsToStorage() {
-            try {
-                localStorage.setItem(OPEN_MONTHS_STORAGE_KEY, JSON.stringify([...openMonths]));
-            } catch (e) {
-                // localStorage לא זמין (למשל מצב פרטי) - פשוט לא נשמר, לא קריטי
-            }
-        }
+        // כל חודש מקובץ בנפרד; במקום להציג את כולם בו-זמנית (עם פתיחה/סגירה) בוחרים חודש
+        // אחד מתוך רשימה נפתחת, וכך המקום שמתפנה משמש להצגת מחשבון התשואה שמתחתיו.
+        let timelineGroups = [];
 
         function buildTimeline() {
             const wrap = document.getElementById('timelineWrap');
-            if (!wrap) return;
+            const select = document.getElementById('monthSelect');
+            if (!wrap || !select) return;
 
             if (!TIMELINE_DATA.length) {
+                select.innerHTML = '';
+                select.style.display = 'none';
                 wrap.innerHTML = '<div class="tl-empty">אין נתוני לוח שנה</div>';
                 return;
             }
+            select.style.display = '';
 
             const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // הרשומה הראשונה שתאריכה עדיין לא עבר - "הקרוב ביותר", ומשמשת גם עוגן לגלילה אוטומטית
+            // הרשומה הראשונה שתאריכה עדיין לא עבר - "הקרוב ביותר", וגם קובעת איזה חודש ייבחר כברירת מחדל
             const nextIndex = TIMELINE_DATA.findIndex(([dateStr]) => parseSheetDate(dateStr) >= today);
-
-            // ברירת המחדל היא מה שהמשתמש השאיר פתוח/סגור בפעם האחרונה (נשמר ב-localStorage).
-            // רק אם אין שום שמירה קודמת (ביקור ראשון) - פותחים כברירת מחדל את החודש הנוכחי והבא.
-            // נקבע פעם אחת בלבד לכל טעינת דף - פתיחה/סגירה ידנית לא נדרסת ברענונים הבאים.
-            if (openMonths === null) {
-                openMonths = loadOpenMonthsFromStorage();
-                if (openMonths === null) {
-                    openMonths = new Set();
-                    openMonths.add(monthKeyOf(today));
-                    openMonths.add(monthKeyOf(new Date(today.getFullYear(), today.getMonth() + 1, 1)));
-                }
-            }
 
             // קיבוץ הרשומות לפי חודש, בסדר כרונולוגי
             const groups = [];
             let currentGroup = null;
+            let defaultKey = null;
 
             TIMELINE_DATA.forEach(([dateStr, dayName, items], i) => {
                 const d = parseSheetDate(dateStr);
@@ -1371,6 +1388,7 @@
                 const isNext = i === nextIndex;
                 const isPast = !isNext && (nextIndex === -1 || i < nextIndex);
                 const stateClass = isNext ? 'is-next' : (isPast ? 'is-past' : '');
+                if (isNext) defaultKey = monthKey;
 
                 const dd = String(d.getDate()).padStart(2, '0');
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -1386,44 +1404,88 @@
                     </div>`);
             });
 
-            wrap.innerHTML = groups.map(g => {
-                const isOpen = openMonths.has(g.key);
-                return `
-                    <div class="tl-month-group ${isOpen ? 'open' : ''}" data-month-key="${g.key}">
-                        <button type="button" class="tl-month-header">
-                            <span>${g.label}</span>
-                            <span class="tl-month-arrow">${isOpen ? '▾' : '▸'}</span>
-                        </button>
-                        <div class="tl-month-content">${g.entriesHtml.join('')}</div>
-                    </div>`;
-            }).join('');
+            timelineGroups = groups;
+            if (defaultKey === null) defaultKey = groups[groups.length - 1].key; // כל התאריכים כבר עברו - נציג את האחרון
 
-            // לחיצה על כותרת חודש פותחת/סוגרת אותו, ושומרת את הבחירה ל-openMonths
-            wrap.querySelectorAll('.tl-month-header').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const group = btn.closest('.tl-month-group');
-                    const key = group.dataset.monthKey;
-                    const willOpen = !group.classList.contains('open');
+            const previouslySelected = select.value;
+            const stillExists = groups.some(g => g.key === previouslySelected);
 
-                    group.classList.toggle('open', willOpen);
-                    btn.querySelector('.tl-month-arrow').textContent = willOpen ? '▾' : '▸';
+            select.innerHTML = groups.map(g => `<option value="${g.key}">${g.label}</option>`).join('');
+            select.value = stillExists ? previouslySelected : defaultKey;
 
-                    if (willOpen) openMonths.add(key);
-                    else openMonths.delete(key);
+            renderSelectedMonth();
+        }
 
-                    saveOpenMonthsToStorage();
-                });
-            });
+        // מציג רק את החודש שנבחר ברשימה הנפתחת, וגולל לאירוע הקרוב ביותר אם הוא בחודש הזה
+        function renderSelectedMonth() {
+            const wrap = document.getElementById('timelineWrap');
+            const select = document.getElementById('monthSelect');
+            if (!wrap || !select) return;
 
-            // גלילה אוטומטית כדי שהאירוע הקרוב ביותר יופיע בראש התצוגה עם פתיחת הדף
-            // (עובד כי החודש שלו פתוח כברירת מחדל - הוא החודש הנוכחי או הבא)
+            const group = timelineGroups.find(g => g.key === select.value);
+            wrap.innerHTML = group ? group.entriesHtml.join('') : '<div class="tl-empty">אין אירועים בחודש זה</div>';
+
             const nextEl = wrap.querySelector('.tl-entry.is-next');
             if (nextEl) {
                 wrap.scrollTop = Math.max(0, nextEl.offsetTop - 10);
+            } else {
+                wrap.scrollTop = 0;
             }
         }
 
+        document.getElementById('monthSelect').addEventListener('change', renderSelectedMonth);
+
         buildTimeline();
+
+        // ---- מחשבון תשואה: מחיר קנייה + שכ"ד חודשי -> תשואה שנתית באחוזים, עם שמירה מקומית ----
+        (function initYieldCalculator() {
+            const priceInput = document.getElementById('yieldPrice');
+            const rentInput = document.getElementById('yieldRent');
+            const resultEl = document.getElementById('yieldResult');
+            if (!priceInput || !rentInput || !resultEl) return;
+
+            const STORAGE_KEY = 'yield-calc-values';
+
+            function calculate() {
+                const price = parseFloat(priceInput.value);
+                const rent = parseFloat(rentInput.value);
+
+                if (!price || price <= 0 || !rent || rent <= 0) {
+                    resultEl.innerHTML = '<span class="yield-label">תשואה שנתית</span>—';
+                    return;
+                }
+
+                const annualYield = (rent * 12 / price) * 100;
+                resultEl.innerHTML = `<span class="yield-label">תשואה שנתית</span>${annualYield.toFixed(2)}%`;
+            }
+
+            function save() {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify({ price: priceInput.value, rent: rentInput.value }));
+                } catch (e) {
+                    // לא קריטי אם לא ניתן לשמור מקומית
+                }
+            }
+
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+                if (saved) {
+                    priceInput.value = saved.price || '';
+                    rentInput.value = saved.rent || '';
+                }
+            } catch (e) {
+                // התעלמות משמירה פגומה
+            }
+
+            [priceInput, rentInput].forEach(input => {
+                input.addEventListener('input', () => {
+                    calculate();
+                    save();
+                });
+            });
+
+            calculate();
+        })();
 
         // ---- סנכרון חי מול הגיליון (Google Sheets) - JSONP, בלי צורך בשרת/מפתח ----
         const SHEET_ID = '13_c30oIvqdOU3BfFSKnXzAAeG1qj7dNrJAEQPvpLwWY';
