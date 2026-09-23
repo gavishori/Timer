@@ -1494,10 +1494,13 @@
                 }
             }
 
+            // ברירת מחדל למחיר הדירה - רק אם המשתמש עוד לא שמר ערך משלו
+            priceInput.value = '3000000';
+
             try {
                 const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
                 if (saved) {
-                    priceInput.value = saved.price || '';
+                    priceInput.value = saved.price || '3000000';
                     rentInput.value = saved.rent || '';
                 }
             } catch (e) {
