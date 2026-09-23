@@ -294,18 +294,23 @@
         }
 
         .yield-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 10px;
         }
 
         .yield-field label {
-            display: block;
+            flex: 0 0 84px;
             font-size: 0.7rem;
             color: #cfe0ff;
-            margin-bottom: 4px;
+            line-height: 1.2;
         }
 
         .yield-input-wrap {
             position: relative;
+            flex: 1;
+            min-width: 0;
         }
 
         .yield-input-wrap .currency {
@@ -1443,11 +1448,21 @@
             renderSelectedMonth();
         }
 
-        // מציג רק את החודש שנבחר ברשימה הנפתחת; כל עוד לא נבחר חודש - אין תוכן מוצג
+        // כמה זמן להשאיר חודש פתוח לפני שהוא נסגר אוטומטית וחוזר ל"בחר חודש"
+        const MONTH_AUTO_COLLAPSE_MS = 20000;
+        let monthCollapseTimer = null;
+
+        // מציג רק את החודש שנבחר ברשימה הנפתחת; כל עוד לא נבחר חודש - אין תוכן מוצג.
+        // אחרי בחירה, החודש נסגר אוטומטית כעבור 20 שניות וחוזר למצב "בחר חודש" מחדש.
         function renderSelectedMonth() {
             const wrap = document.getElementById('timelineWrap');
             const select = document.getElementById('monthSelect');
             if (!wrap || !select) return;
+
+            if (monthCollapseTimer) {
+                clearTimeout(monthCollapseTimer);
+                monthCollapseTimer = null;
+            }
 
             if (!select.value) {
                 wrap.innerHTML = '<div class="tl-empty">בחרו חודש למעלה כדי לראות את האירועים שלו</div>';
@@ -1463,6 +1478,11 @@
             } else {
                 wrap.scrollTop = 0;
             }
+
+            monthCollapseTimer = setTimeout(() => {
+                select.value = '';
+                renderSelectedMonth();
+            }, MONTH_AUTO_COLLAPSE_MS);
         }
 
         document.getElementById('monthSelect').addEventListener('change', renderSelectedMonth);
