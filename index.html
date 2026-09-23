@@ -351,10 +351,15 @@
             color: #8bc34a;
         }
 
-        .done-message {
-            font-size: 1.6rem;
-            font-weight: 700;
-            display: none;
+        .countdown-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #cfe0ff;
+            margin-bottom: 4px;
+        }
+
+        .countdown-label.elapsed {
+            color: #8bc34a;
         }
 
         .export-btn {
@@ -798,6 +803,8 @@
             <div class="center-header">
                 <h1>עוברים לאבן יהודה 🏡</h1>
 
+                <div class="countdown-label" id="countdownLabel">⏳ עד המעבר</div>
+
                 <div class="countdown" id="countdown">
                     <div class="unit">
                         <div class="value" id="days">00</div>
@@ -816,8 +823,6 @@
                         <div class="label">שניות</div>
                     </div>
                 </div>
-
-                <div class="done-message" id="doneMessage">🎉 הגיע היום! בהצלחה במעבר! 🎉</div>
 
                 <div class="center-meta">
                     <span class="target-date">היעד: 28.09.2026, 06:00</span>
@@ -877,20 +882,12 @@
         // גם אם הדף נפתח ממכשיר שנמצא באזור זמן אחר
         const targetDate = new Date('2026-09-28T06:00:00+03:00');
 
+        // לפני היעד סופר כמה זמן נשאר; מרגע שהגענו ליעד ממשיך לספור, הפעם כמה זמן כבר עברנו לאבן יהודה
         function updateCountdown() {
-            const now = new Date();
-            const diff = targetDate.getTime() - now.getTime();
+            const diff = targetDate.getTime() - new Date().getTime();
+            const elapsed = diff <= 0;
 
-            const countdownEl = document.getElementById('countdown');
-            const doneEl = document.getElementById('doneMessage');
-
-            if (diff <= 0) {
-                countdownEl.style.display = 'none';
-                doneEl.style.display = 'block';
-                return;
-            }
-
-            const totalSeconds = Math.floor(diff / 1000);
+            const totalSeconds = Math.floor(Math.abs(diff) / 1000);
             const days = Math.floor(totalSeconds / 86400);
             const hours = Math.floor((totalSeconds % 86400) / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -900,6 +897,12 @@
             document.getElementById('hours').textContent = String(hours).padStart(2, '0');
             document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
             document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+
+            const labelEl = document.getElementById('countdownLabel');
+            if (labelEl) {
+                labelEl.textContent = elapsed ? '🎉 באבן יהודה כבר' : '⏳ עד המעבר';
+                labelEl.classList.toggle('elapsed', elapsed);
+            }
         }
 
         updateCountdown();
@@ -1228,9 +1231,10 @@
 
         function getCountdownParts() {
             const diff = targetDate.getTime() - new Date().getTime();
-            if (diff <= 0) return null;
-            const totalSeconds = Math.floor(diff / 1000);
+            const elapsed = diff <= 0;
+            const totalSeconds = Math.floor(Math.abs(diff) / 1000);
             return {
+                elapsed,
                 days: Math.floor(totalSeconds / 86400),
                 hours: Math.floor((totalSeconds % 86400) / 3600),
                 minutes: Math.floor((totalSeconds % 3600) / 60)
@@ -1240,10 +1244,10 @@
         function buildInsights(tasksData, houseworkData, parts) {
             const insights = [];
 
-            if (parts) {
-                insights.push(`נותרו ${parts.days} ימים ו-${parts.hours} שעות עד המעבר.`);
+            if (parts.elapsed) {
+                insights.push(`🎉 אנחנו באבן יהודה כבר ${parts.days} ימים ו-${parts.hours} שעות.`);
             } else {
-                insights.push('🎉 תאריך המעבר כבר הגיע!');
+                insights.push(`נותרו ${parts.days} ימים ו-${parts.hours} שעות עד המעבר.`);
             }
 
             const tOpen = tasksData.filter(t => !t.done).length;
@@ -1275,7 +1279,7 @@
                 insights.push(`נשארו יותר פריטים פתוחים ב"${bigger}" (${biggerCount}) — אולי שווה להתמקד שם קודם.`);
             }
 
-            if (parts && parts.days <= 14 && totalOpen > 0) {
+            if (!parts.elapsed && parts.days <= 14 && totalOpen > 0) {
                 insights.push(`⚠️ פחות משבועיים למעבר ועדיין יש ${totalOpen} פריטים פתוחים — כדאי להתחיל לתעדף.`);
             }
 
@@ -1313,12 +1317,13 @@
             const parts = getCountdownParts();
             const insights = buildInsights(tasksData, houseworkData, parts);
 
-            const countdownHtml = parts ? `
+            const countdownHtml = `
+                <div class="print-subtitle" style="margin-bottom:6px;">${parts.elapsed ? '🎉 באבן יהודה כבר' : '⏳ עד המעבר'}</div>
                 <div class="print-countdown">
                     <div class="unit"><div class="value">${String(parts.days).padStart(2, '0')}</div><div class="label">ימים</div></div>
                     <div class="unit"><div class="value">${String(parts.hours).padStart(2, '0')}</div><div class="label">שעות</div></div>
                     <div class="unit"><div class="value">${String(parts.minutes).padStart(2, '0')}</div><div class="label">דקות</div></div>
-                </div>` : '';
+                </div>`;
 
             const generatedStr = new Date().toLocaleString('he-IL', { dateStyle: 'long', timeStyle: 'short' });
 
