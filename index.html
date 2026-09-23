@@ -316,7 +316,7 @@
         .yield-input-wrap .currency {
             position: absolute;
             top: 50%;
-            left: 10px;
+            right: 10px;
             transform: translateY(-50%);
             color: #888;
             font-size: 0.85rem;
@@ -334,6 +334,15 @@
             font-size: 0.9rem;
             text-align: left;
             direction: ltr;
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        /* מסתיר את חצי ההגדלה/הקטנה הטבעיים של input[type=number] - הם היו מתנגשים עם סימן ה-₪ */
+        .yield-field input::-webkit-outer-spin-button,
+        .yield-field input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         .yield-result {
