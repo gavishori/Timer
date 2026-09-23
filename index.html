@@ -282,57 +282,73 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 14px;
-            padding: 12px 14px;
+            padding: 14px;
             margin-top: 10px;
         }
 
         .yield-calc h3 {
-            margin: 0 0 8px 0;
+            margin: 0 0 12px 0;
             font-size: 0.85rem;
             color: #cfe0ff;
             text-align: center;
         }
 
-        .yield-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            margin-bottom: 6px;
+        .yield-field {
+            margin-bottom: 10px;
         }
 
-        .yield-row label {
-            font-size: 0.75rem;
+        .yield-field label {
+            display: block;
+            font-size: 0.7rem;
             color: #cfe0ff;
-            flex-shrink: 0;
+            margin-bottom: 4px;
         }
 
-        .yield-row input {
-            flex: 1;
-            min-width: 0;
-            padding: 6px 8px;
+        .yield-input-wrap {
+            position: relative;
+        }
+
+        .yield-input-wrap .currency {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            color: #888;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .yield-field input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 9px 26px 9px 10px;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.3);
             background: rgba(255, 255, 255, 0.95);
             color: #333;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             text-align: left;
             direction: ltr;
         }
 
         .yield-result {
-            margin-top: 8px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
             text-align: center;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #8bc34a;
         }
 
         .yield-result .yield-label {
-            font-size: 0.72rem;
-            font-weight: 400;
-            color: #cfe0ff;
             display: block;
+            font-size: 0.7rem;
+            color: #cfe0ff;
+            margin-bottom: 2px;
+        }
+
+        .yield-result .yield-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8bc34a;
         }
 
         .done-message {
@@ -821,17 +837,23 @@
 
             <div class="yield-calc">
                 <h3>💰 מחשבון תשואה</h3>
-                <div class="yield-row">
-                    <label for="yieldPrice">מחיר קניית דירה (₪)</label>
-                    <input type="number" id="yieldPrice" placeholder="1,800,000" min="0" step="1000">
+                <div class="yield-field">
+                    <label for="yieldPrice">מחיר קניית דירה</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="yieldPrice" placeholder="1800000" min="0" step="1000">
+                        <span class="currency">₪</span>
+                    </div>
                 </div>
-                <div class="yield-row">
-                    <label for="yieldRent">שכ"ד חודשי (₪)</label>
-                    <input type="number" id="yieldRent" placeholder="5,500" min="0" step="50">
+                <div class="yield-field">
+                    <label for="yieldRent">שכ"ד חודשי</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="yieldRent" placeholder="5500" min="0" step="50">
+                        <span class="currency">₪</span>
+                    </div>
                 </div>
-                <div class="yield-result" id="yieldResult">
+                <div class="yield-result">
                     <span class="yield-label">תשואה שנתית</span>
-                    —
+                    <span class="yield-value" id="yieldResult">—</span>
                 </div>
             </div>
         </div>
@@ -1368,13 +1390,12 @@
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // הרשומה הראשונה שתאריכה עדיין לא עבר - "הקרוב ביותר", וגם קובעת איזה חודש ייבחר כברירת מחדל
+            // הרשומה הראשונה שתאריכה עדיין לא עבר - "הקרוב ביותר" (מודגשת בירוק בתוך החודש שלה, ברגע שבוחרים בו)
             const nextIndex = TIMELINE_DATA.findIndex(([dateStr]) => parseSheetDate(dateStr) >= today);
 
             // קיבוץ הרשומות לפי חודש, בסדר כרונולוגי
             const groups = [];
             let currentGroup = null;
-            let defaultKey = null;
 
             TIMELINE_DATA.forEach(([dateStr, dayName, items], i) => {
                 const d = parseSheetDate(dateStr);
@@ -1388,7 +1409,6 @@
                 const isNext = i === nextIndex;
                 const isPast = !isNext && (nextIndex === -1 || i < nextIndex);
                 const stateClass = isNext ? 'is-next' : (isPast ? 'is-past' : '');
-                if (isNext) defaultKey = monthKey;
 
                 const dd = String(d.getDate()).padStart(2, '0');
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -1405,22 +1425,29 @@
             });
 
             timelineGroups = groups;
-            if (defaultKey === null) defaultKey = groups[groups.length - 1].key; // כל התאריכים כבר עברו - נציג את האחרון
 
+            // לא בוחרים חודש אוטומטית - נשאר על "בחר חודש" עד שהמשתמש בוחר בעצמו,
+            // חוץ ממקרה שכבר נבחר חודש (למשל אחרי סנכרון חי מחדש) - אז שומרים על הבחירה שלו
             const previouslySelected = select.value;
             const stillExists = groups.some(g => g.key === previouslySelected);
 
-            select.innerHTML = groups.map(g => `<option value="${g.key}">${g.label}</option>`).join('');
-            select.value = stillExists ? previouslySelected : defaultKey;
+            select.innerHTML = '<option value="" disabled selected>בחר חודש...</option>' +
+                groups.map(g => `<option value="${g.key}">${g.label}</option>`).join('');
+            select.value = stillExists ? previouslySelected : '';
 
             renderSelectedMonth();
         }
 
-        // מציג רק את החודש שנבחר ברשימה הנפתחת, וגולל לאירוע הקרוב ביותר אם הוא בחודש הזה
+        // מציג רק את החודש שנבחר ברשימה הנפתחת; כל עוד לא נבחר חודש - אין תוכן מוצג
         function renderSelectedMonth() {
             const wrap = document.getElementById('timelineWrap');
             const select = document.getElementById('monthSelect');
             if (!wrap || !select) return;
+
+            if (!select.value) {
+                wrap.innerHTML = '<div class="tl-empty">בחרו חודש למעלה כדי לראות את האירועים שלו</div>';
+                return;
+            }
 
             const group = timelineGroups.find(g => g.key === select.value);
             wrap.innerHTML = group ? group.entriesHtml.join('') : '<div class="tl-empty">אין אירועים בחודש זה</div>';
@@ -1451,12 +1478,12 @@
                 const rent = parseFloat(rentInput.value);
 
                 if (!price || price <= 0 || !rent || rent <= 0) {
-                    resultEl.innerHTML = '<span class="yield-label">תשואה שנתית</span>—';
+                    resultEl.textContent = '—';
                     return;
                 }
 
                 const annualYield = (rent * 12 / price) * 100;
-                resultEl.innerHTML = `<span class="yield-label">תשואה שנתית</span>${annualYield.toFixed(2)}%`;
+                resultEl.textContent = `${annualYield.toFixed(2)}%`;
             }
 
             function save() {
