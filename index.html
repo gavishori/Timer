@@ -365,6 +365,13 @@
             color: #8bc34a;
         }
 
+        .yield-formula {
+            margin-top: 4px;
+            font-size: 0.68rem;
+            color: #9fb4dd;
+            direction: ltr;
+        }
+
         .countdown-label {
             font-size: 0.75rem;
             font-weight: 600;
@@ -873,6 +880,7 @@
                 <div class="yield-result">
                     <span class="yield-label">תשואה שנתית</span>
                     <span class="yield-value" id="yieldResult">—</span>
+                    <div class="yield-formula" id="yieldFormula"></div>
                 </div>
             </div>
         </div>
@@ -1503,6 +1511,7 @@
             const priceInput = document.getElementById('yieldPrice');
             const rentInput = document.getElementById('yieldRent');
             const resultEl = document.getElementById('yieldResult');
+            const formulaEl = document.getElementById('yieldFormula');
             if (!priceInput || !rentInput || !resultEl) return;
 
             const STORAGE_KEY = 'yield-calc-values';
@@ -1513,11 +1522,18 @@
 
                 if (!price || price <= 0 || !rent || rent <= 0) {
                     resultEl.textContent = '—';
+                    if (formulaEl) formulaEl.textContent = '';
                     return;
                 }
 
                 const annualYield = (rent * 12 / price) * 100;
                 resultEl.textContent = `${annualYield.toFixed(2)}%`;
+
+                // שורת הסבר: איך התוצאה חושבה, עם המספרים בפועל
+                if (formulaEl) {
+                    const fmt = n => n.toLocaleString('en-US');
+                    formulaEl.textContent = `(${fmt(rent)} × 12) ÷ ${fmt(price)} × 100 = ${annualYield.toFixed(2)}%`;
+                }
             }
 
             function save() {
