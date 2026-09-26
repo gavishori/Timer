@@ -419,12 +419,41 @@
             margin: 0 0 14px 0;
             text-align: center;
             flex-shrink: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .task-column h2:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .task-column h2 .col-arrow {
+            display: inline-block;
+            font-size: 0.75rem;
+            color: #cfe0ff;
+            margin-left: 4px;
         }
 
         .task-column h2 .task-count {
             font-size: 0.8rem;
             font-weight: 400;
             color: #cfe0ff;
+        }
+
+        /* מצב סגור (ברירת המחדל): רק הכותרת נראית, והעמודה מתכווצת לגובה הכותרת */
+        .task-column.collapsed {
+            align-self: flex-start;
+        }
+
+        .task-column.collapsed h2 {
+            margin-bottom: 0;
+        }
+
+        .task-column.collapsed .add-task,
+        .task-column.collapsed .task-list {
+            display: none;
         }
 
         .add-task {
@@ -811,8 +840,8 @@
 <body>
 
     <div class="container">
-        <div class="task-column" data-key="tasks">
-            <h2>משימות <span class="task-count"></span></h2>
+        <div class="task-column collapsed" data-key="tasks">
+            <h2 role="button" tabindex="0" aria-expanded="false"><span class="col-arrow">▸</span> משימות <span class="task-count"></span></h2>
             <div class="add-task">
                 <input type="text" placeholder="משימה חדשה..." maxlength="200">
                 <button type="button">➕</button>
@@ -885,8 +914,8 @@
             </div>
         </div>
 
-        <div class="task-column" data-key="housework">
-            <h2>עבודות בית <span class="task-count"></span></h2>
+        <div class="task-column collapsed" data-key="housework">
+            <h2 role="button" tabindex="0" aria-expanded="false"><span class="col-arrow">▸</span> עבודות בית <span class="task-count"></span></h2>
             <div class="add-task">
                 <input type="text" placeholder="משימה חדשה..." maxlength="200">
                 <button type="button">➕</button>
@@ -1140,6 +1169,23 @@
             button.addEventListener('click', () => addTask(column));
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') addTask(column);
+            });
+
+            // פתיחה/סגירה של העמודה בלחיצה על הכותרת (ברירת המחדל: סגורה)
+            const header = column.querySelector('h2');
+            const arrow = header.querySelector('.col-arrow');
+            const toggleColumn = () => {
+                const willOpen = column.classList.contains('collapsed');
+                column.classList.toggle('collapsed', !willOpen);
+                header.setAttribute('aria-expanded', String(willOpen));
+                arrow.textContent = willOpen ? '▾' : '▸';
+            };
+            header.addEventListener('click', toggleColumn);
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleColumn();
+                }
             });
 
             renderTasks(column);
