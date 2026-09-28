@@ -435,51 +435,6 @@
             padding-top: 4px;
         }
 
-        .km-history-edit {
-            display: flex;
-            gap: 6px;
-        }
-
-        .km-history-edit select,
-        .km-history-edit input {
-            flex: 1;
-            min-width: 0;
-            padding: 5px 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.95);
-            color: #333;
-            font-size: 0.68rem;
-        }
-
-        .km-history-edit input {
-            direction: ltr;
-            text-align: left;
-            appearance: textfield;
-            -moz-appearance: textfield;
-        }
-
-        .km-history-edit input::-webkit-outer-spin-button,
-        .km-history-edit input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .km-history-edit button {
-            flex-shrink: 0;
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            padding: 5px 10px;
-            font-size: 0.68rem;
-            cursor: pointer;
-        }
-
-        .km-history-edit button:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
         /* ---- מחשבון תשואה ---- */
         .yield-calc {
             flex-shrink: 0;
@@ -1111,11 +1066,6 @@
                         <div class="km-stats"></div>
                         <div class="km-history">
                             <div class="km-history-list"></div>
-                            <div class="km-history-edit">
-                                <select class="km-hist-month"></select>
-                                <input type="number" class="km-hist-km" placeholder="ק&quot;מ בחודש">
-                                <button type="button" class="km-hist-save">שמור</button>
-                            </div>
                         </div>
                     </div>
 
@@ -1131,11 +1081,6 @@
                         <div class="km-stats"></div>
                         <div class="km-history">
                             <div class="km-history-list"></div>
-                            <div class="km-history-edit">
-                                <select class="km-hist-month"></select>
-                                <input type="number" class="km-hist-km" placeholder="ק&quot;מ בחודש">
-                                <button type="button" class="km-hist-save">שמור</button>
-                            </div>
                         </div>
                     </div>
 
@@ -1862,17 +1807,6 @@
                 return ay - by || am - bm;
             }
 
-            // 12 החודשים של שנת הליסינג הנוכחית (אוגוסט 2026 - יולי 2027), לרשימת "הוסף/ערוך היסטוריה"
-            function leaseYearMonthKeys() {
-                const keys = [];
-                const d = new Date(LEASE_YEAR_START);
-                for (let i = 0; i < 12; i++) {
-                    keys.push(monthKeyOf(d));
-                    d.setMonth(d.getMonth() + 1);
-                }
-                return keys;
-            }
-
             function renderHistory(row, state) {
                 const listEl = row.querySelector('.km-history-list');
                 if (!listEl) return;
@@ -2016,40 +1950,6 @@
                     if (e.key === 'Enter') applyReading(currentInput.value);
                 });
 
-                // עריכה/הוספה ידנית של חודש עבר בהיסטוריה (למשל להזין רטרואקטיבית "אוגוסט: 960 ק"מ")
-                if (isLeasing) {
-                    const monthSelect = row.querySelector('.km-hist-month');
-                    const kmInput = row.querySelector('.km-hist-km');
-                    const saveBtn = row.querySelector('.km-hist-save');
-
-                    if (monthSelect) {
-                        monthSelect.innerHTML = leaseYearMonthKeys()
-                            .map(key => `<option value="${key}">${monthLabel(key)}</option>`)
-                            .join('');
-                    }
-
-                    if (saveBtn) {
-                        saveBtn.addEventListener('click', () => {
-                            const monthKey = monthSelect.value;
-                            const km = parseFloat(kmInput.value);
-                            if (!monthKey || isNaN(km)) return;
-
-                            const values = loadValues();
-                            const state = values[car] || { current: null, openMonthKey: null, history: [] };
-                            if (!state.history) state.history = [];
-
-                            const idx = state.history.findIndex(h => h.monthKey === monthKey);
-                            if (idx >= 0) state.history[idx].km = km;
-                            else state.history.push({ monthKey, km });
-
-                            values[car] = state;
-                            saveValues(values);
-                            // עריכת חודש עבר משנה גם את "נסעת החודש" הפתוח כרגע (הבסיס שלו תלוי בהיסטוריה)
-                            computeAndRender(row, isLeasing, state);
-                            kmInput.value = '';
-                        });
-                    }
-                }
             });
 
             // פתיחה/סגירה של כל הקוביה בלחיצה על הכותרת (סגורה כברירת מחדל)
