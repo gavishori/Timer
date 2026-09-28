@@ -339,8 +339,26 @@
 
         .km-inputs {
             display: flex;
+            align-items: flex-end;
             gap: 8px;
             margin-bottom: 6px;
+        }
+
+        .km-check-btn {
+            flex-shrink: 0;
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .km-check-btn:hover {
+            background: #43a047;
         }
 
         .km-field {
@@ -990,7 +1008,7 @@
                 </div>
 
                 <div class="center-meta">
-                    <span class="target-date">היעד: 28.09.2026, 06:00</span>
+                    <span class="target-date">היעד: 28.09.2026, 08:00</span>
                     <span class="sync-status" id="syncStatus"></span>
                 </div>
 
@@ -1017,6 +1035,7 @@
                                 <label>ק"מ נוכחי</label>
                                 <input type="number" class="km-current" min="0" step="1">
                             </div>
+                            <button type="button" class="km-check-btn">בדוק</button>
                         </div>
                         <div class="km-stats"></div>
                     </div>
@@ -1028,6 +1047,7 @@
                                 <label>ק"מ נוכחי</label>
                                 <input type="number" class="km-current" min="0" step="1">
                             </div>
+                            <button type="button" class="km-check-btn">בדוק</button>
                         </div>
                         <div class="km-stats"></div>
                     </div>
@@ -1039,6 +1059,7 @@
                                 <label>ק"מ נוכחי</label>
                                 <input type="number" class="km-current" min="0" step="1">
                             </div>
+                            <button type="button" class="km-check-btn">בדוק</button>
                         </div>
                         <div class="km-stats"></div>
                     </div>
@@ -1083,10 +1104,10 @@
     <div class="print-report" id="printReport"></div>
 
     <script>
-        // התאריך והשעה של המעבר: 28.09.2026, 06:00 לפי שעון ישראל (קיץ, UTC+3)
+        // התאריך והשעה של המעבר: 28.09.2026, 08:00 לפי שעון ישראל (קיץ, UTC+3)
         // הכתיבה עם היסט מפורש (+03:00) מבטיחה שהספירה תהיה מדויקת
         // גם אם הדף נפתח ממכשיר שנמצא באזור זמן אחר
-        const targetDate = new Date('2026-09-28T06:00:00+03:00');
+        const targetDate = new Date('2026-09-28T08:00:00+03:00');
 
         // לפני היעד סופר כמה זמן נשאר; מרגע שהגענו ליעד ממשיך לספור, הפעם כמה זמן כבר עברנו לאבן יהודה
         function updateCountdown() {
@@ -1553,7 +1574,7 @@
             const report = document.getElementById('printReport');
             report.innerHTML = `
                 <h1>עוברים לאבן יהודה 🏡</h1>
-                <div class="print-subtitle">סיכום שהופק ב-${generatedStr} | יעד המעבר: 28.09.2026, 06:00</div>
+                <div class="print-subtitle">סיכום שהופק ב-${generatedStr} | יעד המעבר: 28.09.2026, 08:00</div>
 
                 ${countdownHtml}
 
@@ -1826,11 +1847,17 @@
                     currentInput.value = saved.current;
                 }
 
-                // מריצים את הבדיקה גם בטעינת הדף (לא רק בהקלדה) - כך שגם אם נפתח הדף
+                // מריצים את הבדיקה גם בטעינת הדף (לא רק בלחיצה על "בדוק") - כך שגם אם נפתח הדף
                 // בחודש חדש בלי להזין כלום, הערך השמור הופך אוטומטית לנקודת ההתחלה של החודש
                 applyReading(currentInput.value);
 
-                currentInput.addEventListener('input', () => applyReading(currentInput.value));
+                // שומרים ומחשבים רק בלחיצה מפורשת על "בדוק" (לא תוך כדי הקלדה) - כדי שערך חלקי
+                // באמצע ההקלדה (למשל "2" לפני שמסיימים "20000") לא ייחשב בטעות כקריאת הרכב
+                const checkBtn = row.querySelector('.km-check-btn');
+                checkBtn.addEventListener('click', () => applyReading(currentInput.value));
+                currentInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') applyReading(currentInput.value);
+                });
             });
 
             // פתיחה/סגירה של כל הקוביה בלחיצה על הכותרת (סגורה כברירת מחדל)
@@ -1889,14 +1916,15 @@
                 }
             }
 
-            // ברירת מחדל למחיר הדירה - רק אם המשתמש עוד לא שמר ערך משלו
+            // ברירות מחדל - רק אם המשתמש עוד לא שמר ערכים משלו
             priceInput.value = '3000000';
+            rentInput.value = '8000';
 
             try {
                 const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
                 if (saved) {
                     priceInput.value = saved.price || '3000000';
-                    rentInput.value = saved.rent || '';
+                    rentInput.value = saved.rent || '8000';
                 }
             } catch (e) {
                 // התעלמות משמירה פגומה
