@@ -1840,7 +1840,8 @@
             const LEASE_YEAR_START = new Date(2026, 7, 25); // 25.08.2026
             const LEASE_YEAR_END = new Date(2027, 7, 25);
             const ANNUAL_QUOTA = 25000;
-            const YEAR_BASELINE = 18824; // ק"מ שהיה במונה בתחילת שנת הליסינג
+            // ק"מ שהיה במונה בתחילת שנת הליסינג - שונה לכל רכב
+            const BASELINES = { gray: 18824, white: 86106 };
 
             const STORAGE_KEY = 'km-tracker-values';
             const cars = ['gray', 'white', 'lip'];
@@ -1897,11 +1898,11 @@
             // הק"מ שהיה במונה לפני תחילת חודש נתון = הבסיס השנתי + סכום כל החודשים
             // הקודמים שכבר "נסגרו" בהיסטוריה. ככה נסועת החודש הנוכחי (שעדיין פתוח)
             // תמיד מחושבת נכון גם אם הוזנה הערה רטרואקטיבית לחודש קודם (כמו אוגוסט).
-            function kmBeforeMonth(state, monthKey) {
+            function kmBeforeMonth(state, monthKey, baseline) {
                 const priorKm = (state.history || [])
                     .filter(h => compareMonthKeys(h.monthKey, monthKey) < 0)
                     .reduce((sum, h) => sum + h.km, 0);
-                return YEAR_BASELINE + priorKm;
+                return baseline + priorKm;
             }
 
             // ---- גרף עמודות: כמה נסע כל רכב בכל חודש (מבוסס רק על נתונים ששמורים בפועל) ----
@@ -1914,7 +1915,7 @@
                 const series = {};
                 (state.history || []).forEach(h => { series[h.monthKey] = h.km; });
                 if (state.openMonthKey != null && state.current != null) {
-                    series[state.openMonthKey] = state.current - kmBeforeMonth(state, state.openMonthKey);
+                    series[state.openMonthKey] = state.current - kmBeforeMonth(state, state.openMonthKey, BASELINES[car] || 0);
                 }
                 return series;
             }
@@ -1978,6 +1979,8 @@
             // כשמתחיל חודש חדש, הקודם נסגר ונשמר בהיסטוריה. הנסועה של החודש הפתוח
             // מחושבת תמיד מול הבסיס השנתי + כל מה שכבר נסגר בהיסטוריה (כולל תיקונים ידניים).
             function computeAndRender(row, isLeasing, state) {
+                const car = row.dataset.car;
+                const baseline = BASELINES[car] || 0;
                 const statsEl = row.querySelector('.km-stats');
                 const current = state.current;
                 const hasCurrent = current != null && !isNaN(current);
@@ -1985,7 +1988,7 @@
                 const lines = [];
 
                 if (hasCurrent && state.openMonthKey != null) {
-                    const kmThisMonth = current - kmBeforeMonth(state, state.openMonthKey);
+                    const kmThisMonth = current - kmBeforeMonth(state, state.openMonthKey, baseline);
                     lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
                 } else {
                     lines.push('נסעת החודש: — (הזינו ק"מ נוכחי)');
@@ -1998,7 +2001,7 @@
                         const daysElapsed = Math.max(0, Math.min(totalDays, Math.floor((now - LEASE_YEAR_START) / 86400000)));
                         const daysRemaining = Math.max(0, totalDays - daysElapsed);
 
-                        const kmThisYear = current - YEAR_BASELINE;
+                        const kmThisYear = current - baseline;
                         const kmRemaining = ANNUAL_QUOTA - kmThisYear;
                         const pct = (kmThisYear / ANNUAL_QUOTA) * 100;
 
@@ -2050,7 +2053,7 @@
                     if (state.openMonthKey !== monthKey) {
                         // הבדיקה הראשונה החודש - סוגרים את החודש הקודם (אם היה) ונועלים את הערך הזה כרשמי
                         if (state.openMonthKey != null && state.current != null) {
-                            const completedKm = state.current - kmBeforeMonth(state, state.openMonthKey);
+                            const completedKm = state.current - kmBeforeMonth(state, state.openMonthKey, BASELINES[car] || 0);
                             const idx = state.history.findIndex(h => h.monthKey === state.openMonthKey);
                             if (idx >= 0) state.history[idx].km = completedKm;
                             else state.history.push({ monthKey: state.openMonthKey, km: completedKm });
