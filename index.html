@@ -1889,10 +1889,19 @@
                 listEl.innerHTML = rows + `<div class="km-history-row km-history-total"><span>סה"כ</span><span>${fmt(total)} ק"מ</span></div>`;
             }
 
-            // "תמונת מצב" חודשית: הקריאה הראשונה שמוזנת בכל חודש (בד"כ ב-1 לחודש) נשמרת
-            // אוטומטית כנקודת ההתחלה של אותו חודש, וממנה מחושבת הנסועה החודשית -
-            // בלי צורך בשדה נפרד. אם דילגתם על הזנה בדיוק ב-1 לחודש, ההזנה הבאה
-            // (גם אם באיחור) פשוט הופכת לנקודת ההתחלה של החודש הנוכחי.
+            // הק"מ שהיה במונה לפני תחילת חודש נתון = הבסיס השנתי + סכום כל החודשים
+            // הקודמים שכבר "נסגרו" בהיסטוריה. ככה נסועת החודש הנוכחי (שעדיין פתוח)
+            // תמיד מחושבת נכון גם אם הוזנה הערה רטרואקטיבית לחודש קודם (כמו אוגוסט).
+            function kmBeforeMonth(state, monthKey) {
+                const priorKm = (state.history || [])
+                    .filter(h => compareMonthKeys(h.monthKey, monthKey) < 0)
+                    .reduce((sum, h) => sum + h.km, 0);
+                return YEAR_BASELINE + priorKm;
+            }
+
+            // הקריאה הראשונה שמוזנת בכל חודש (בד"כ ב-1 לחודש) פותחת אותו כ"חודש נוכחי";
+            // כשמתחיל חודש חדש, הקודם נסגר ונשמר בהיסטוריה. הנסועה של החודש הפתוח
+            // מחושבת תמיד מול הבסיס השנתי + כל מה שכבר נסגר בהיסטוריה (כולל תיקונים ידניים).
             function computeAndRender(row, isLeasing, state) {
                 const statsEl = row.querySelector('.km-stats');
                 const current = state.current;
@@ -1900,8 +1909,8 @@
 
                 const lines = [];
 
-                if (hasCurrent && state.snapshotValue != null) {
-                    const kmThisMonth = current - state.snapshotValue;
+                if (hasCurrent && state.openMonthKey != null) {
+                    const kmThisMonth = current - kmBeforeMonth(state, state.openMonthKey);
                     lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
                 } else {
                     lines.push('נסעת החודש: — (הזינו ק"מ נוכחי)');
@@ -1949,23 +1958,21 @@
 
                 function applyReading(rawValue) {
                     const values = loadValues();
-                    const state = values[car] || { current: null, snapshotValue: null, snapshotMonthKey: null, history: [] };
+                    const state = values[car] || { current: null, openMonthKey: null, history: [] };
                     if (!state.history) state.history = [];
                     const parsed = parseFloat(rawValue);
 
                     if (!isNaN(parsed)) {
                         const monthKey = monthKeyOf(new Date());
-                        if (state.snapshotMonthKey !== monthKey) {
+                        if (state.openMonthKey !== monthKey) {
                             // חודש חדש - סוגרים את החודש הקודם ושומרים אותו בהיסטוריה (אם היה לו נתון תקין)
-                            if (state.snapshotMonthKey != null && state.current != null && state.snapshotValue != null) {
-                                const completedKm = state.current - state.snapshotValue;
-                                const idx = state.history.findIndex(h => h.monthKey === state.snapshotMonthKey);
+                            if (state.openMonthKey != null && state.current != null) {
+                                const completedKm = state.current - kmBeforeMonth(state, state.openMonthKey);
+                                const idx = state.history.findIndex(h => h.monthKey === state.openMonthKey);
                                 if (idx >= 0) state.history[idx].km = completedKm;
-                                else state.history.push({ monthKey: state.snapshotMonthKey, km: completedKm });
+                                else state.history.push({ monthKey: state.openMonthKey, km: completedKm });
                             }
-                            // הערך החדש הופך לנקודת ההתחלה של החודש הנוכחי
-                            state.snapshotValue = parsed;
-                            state.snapshotMonthKey = monthKey;
+                            state.openMonthKey = monthKey;
                         }
                         state.current = parsed;
                     } else {
@@ -1982,7 +1989,7 @@
                 // בלי צורך בטופס ידני. לא דורס עריכה עתידית של המשתמש לחודש הזה.
                 if (car === 'gray') {
                     const seedValues = loadValues();
-                    const seedState = seedValues.gray || { current: null, snapshotValue: null, snapshotMonthKey: null, history: [] };
+                    const seedState = seedValues.gray || { current: null, openMonthKey: null, history: [] };
                     if (!seedState.history) seedState.history = [];
                     if (!seedState.history.some(h => h.monthKey === '2026-7')) {
                         seedState.history.push({ monthKey: '2026-7', km: 960 });
@@ -2028,7 +2035,7 @@
                             if (!monthKey || isNaN(km)) return;
 
                             const values = loadValues();
-                            const state = values[car] || { current: null, snapshotValue: null, snapshotMonthKey: null, history: [] };
+                            const state = values[car] || { current: null, openMonthKey: null, history: [] };
                             if (!state.history) state.history = [];
 
                             const idx = state.history.findIndex(h => h.monthKey === monthKey);
@@ -2037,7 +2044,8 @@
 
                             values[car] = state;
                             saveValues(values);
-                            renderHistory(row, state);
+                            // עריכת חודש עבר משנה גם את "נסעת החודש" הפתוח כרגע (הבסיס שלו תלוי בהיסטוריה)
+                            computeAndRender(row, isLeasing, state);
                             kmInput.value = '';
                         });
                     }
