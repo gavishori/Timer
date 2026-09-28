@@ -276,6 +276,121 @@
             padding: 20px 0;
         }
 
+        /* ---- מעקב קילומטראז' ---- */
+        .km-tracker {
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            padding: 10px 14px;
+            margin-top: 10px;
+        }
+
+        .km-header {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #cfe0ff;
+            text-align: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .km-header .col-arrow {
+            display: inline-block;
+            font-size: 0.7rem;
+            margin-left: 2px;
+        }
+
+        .km-header:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .km-body {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .km-tracker.collapsed .km-body {
+            display: none;
+        }
+
+        .km-tracker:not(.collapsed) .km-body {
+            display: block;
+        }
+
+        .km-row {
+            padding: 8px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .km-row:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .km-row-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #ffd166;
+            margin-bottom: 6px;
+        }
+
+        .km-inputs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .km-field {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .km-field label {
+            display: block;
+            font-size: 0.62rem;
+            color: #cfe0ff;
+            margin-bottom: 2px;
+        }
+
+        .km-field input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            font-size: 0.8rem;
+            text-align: left;
+            direction: ltr;
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        .km-field input::-webkit-outer-spin-button,
+        .km-field input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .km-stats {
+            font-size: 0.72rem;
+            color: #e3ebfb;
+            line-height: 1.6;
+        }
+
+        .km-stats .km-warning {
+            color: #ff6b6b;
+            font-weight: 700;
+        }
+
+        .km-stats .km-ok {
+            color: #8bc34a;
+        }
+
         /* ---- מחשבון תשואה ---- */
         .yield-calc {
             flex-shrink: 0;
@@ -889,6 +1004,58 @@
             <div class="tl-sync-status" id="timelineSyncStatus"></div>
             <select class="month-select" id="monthSelect"></select>
             <div class="timeline-wrap" id="timelineWrap"></div>
+
+            <div class="km-tracker collapsed" id="kmTracker">
+                <h3 class="km-header" role="button" tabindex="0" aria-expanded="false">
+                    <span><span class="col-arrow">▸</span> 🚗 מעקב קילומטראז'</span>
+                </h3>
+                <div class="km-body">
+                    <div class="km-row" data-car="gray">
+                        <div class="km-row-title">ליסינג אפור</div>
+                        <div class="km-inputs">
+                            <div class="km-field">
+                                <label>ק"מ נוכחי</label>
+                                <input type="number" class="km-current" min="0" step="1">
+                            </div>
+                            <div class="km-field">
+                                <label>ק"מ בתחילת החודש</label>
+                                <input type="number" class="km-month-start" min="0" step="1">
+                            </div>
+                        </div>
+                        <div class="km-stats"></div>
+                    </div>
+
+                    <div class="km-row" data-car="white">
+                        <div class="km-row-title">ליסינג לבן</div>
+                        <div class="km-inputs">
+                            <div class="km-field">
+                                <label>ק"מ נוכחי</label>
+                                <input type="number" class="km-current" min="0" step="1">
+                            </div>
+                            <div class="km-field">
+                                <label>ק"מ בתחילת החודש</label>
+                                <input type="number" class="km-month-start" min="0" step="1">
+                            </div>
+                        </div>
+                        <div class="km-stats"></div>
+                    </div>
+
+                    <div class="km-row km-row-simple" data-car="lip">
+                        <div class="km-row-title">ליפ</div>
+                        <div class="km-inputs">
+                            <div class="km-field">
+                                <label>ק"מ נוכחי</label>
+                                <input type="number" class="km-current" min="0" step="1">
+                            </div>
+                            <div class="km-field">
+                                <label>ק"מ בתחילת החודש</label>
+                                <input type="number" class="km-month-start" min="0" step="1">
+                            </div>
+                        </div>
+                        <div class="km-stats"></div>
+                    </div>
+                </div>
+            </div>
 
             <div class="yield-calc">
                 <h3>💰 מחשבון תשואה</h3>
@@ -1551,6 +1718,137 @@
         document.getElementById('monthSelect').addEventListener('change', renderSelectedMonth);
 
         buildTimeline();
+
+        // ---- מעקב קילומטראז' לשני רכבי הליסינג (25,000 ק"מ/שנה) ולליפ (מעקב חודשי בלבד) ----
+        (function initKmTracker() {
+            const tracker = document.getElementById('kmTracker');
+            if (!tracker) return;
+
+            // תחילת שנת הליסינג וגבולות המכסה - זהים לשני רכבי הליסינג
+            const LEASE_YEAR_START = new Date(2026, 7, 25); // 25.08.2026
+            const LEASE_YEAR_END = new Date(2027, 7, 25);
+            const ANNUAL_QUOTA = 25000;
+            const YEAR_BASELINE = 18824; // ק"מ שהיה במונה בתחילת שנת הליסינג
+
+            const STORAGE_KEY = 'km-tracker-values';
+            const cars = ['gray', 'white', 'lip'];
+
+            function loadValues() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
+                } catch (e) {
+                    return {};
+                }
+            }
+
+            function saveValues(values) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+                } catch (e) {
+                    // לא קריטי אם אי אפשר לשמור מקומית
+                }
+            }
+
+            const stored = loadValues();
+
+            function fmt(n) {
+                return Math.round(n).toLocaleString('en-US');
+            }
+
+            function computeAndRender(row, isLeasing) {
+                const currentInput = row.querySelector('.km-current');
+                const monthStartInput = row.querySelector('.km-month-start');
+                const statsEl = row.querySelector('.km-stats');
+
+                const current = parseFloat(currentInput.value);
+                const monthStart = parseFloat(monthStartInput.value);
+
+                const hasCurrent = !isNaN(current) && current >= 0;
+                const hasMonthStart = !isNaN(monthStart) && monthStart >= 0;
+
+                const lines = [];
+
+                // נסועה חודשית - זהה לכל הרכבים, כולל הליפ
+                if (hasCurrent && hasMonthStart) {
+                    const kmThisMonth = current - monthStart;
+                    lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
+                } else {
+                    lines.push('נסעת החודש: — (מלאו את שני השדות)');
+                }
+
+                if (isLeasing) {
+                    if (hasCurrent) {
+                        const now = new Date();
+                        const totalDays = Math.round((LEASE_YEAR_END - LEASE_YEAR_START) / 86400000);
+                        const daysElapsed = Math.max(0, Math.min(totalDays, Math.floor((now - LEASE_YEAR_START) / 86400000)));
+                        const daysRemaining = Math.max(0, totalDays - daysElapsed);
+
+                        const kmThisYear = current - YEAR_BASELINE;
+                        const kmRemaining = ANNUAL_QUOTA - kmThisYear;
+                        const pct = (kmThisYear / ANNUAL_QUOTA) * 100;
+
+                        if (daysRemaining > 0) {
+                            const dailyAllowance = kmRemaining / daysRemaining;
+                            if (dailyAllowance < 0) {
+                                lines.push(`<span class="km-warning">⚠️ חרגתם מהמכסה השנתית ב-${fmt(-kmRemaining)} ק"מ</span>`);
+                            } else {
+                                lines.push(`מותר לנסוע: <strong>${dailyAllowance.toFixed(1)}</strong> ק"מ ליום (${daysRemaining} ימים נותרו)`);
+                            }
+                        } else {
+                            lines.push('שנת הליסינג הסתיימה');
+                        }
+
+                        const pctClass = pct > 100 ? 'km-warning' : (pct > 90 ? '' : 'km-ok');
+                        lines.push(`מצב שנתי: <span class="${pctClass}">${fmt(kmThisYear)} / ${fmt(ANNUAL_QUOTA)} ק"מ (${pct.toFixed(0)}%)</span>`);
+                    } else {
+                        lines.push('מותר לנסוע ליום: —');
+                        lines.push('מצב שנתי: —');
+                    }
+                }
+
+                statsEl.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+            }
+
+            tracker.querySelectorAll('.km-row').forEach(row => {
+                const car = row.dataset.car;
+                const isLeasing = car === 'gray' || car === 'white';
+                const currentInput = row.querySelector('.km-current');
+                const monthStartInput = row.querySelector('.km-month-start');
+
+                const saved = stored[car] || {};
+                if (saved.current != null) currentInput.value = saved.current;
+                if (saved.monthStart != null) monthStartInput.value = saved.monthStart;
+
+                const onChange = () => {
+                    const values = loadValues();
+                    values[car] = { current: currentInput.value, monthStart: monthStartInput.value };
+                    saveValues(values);
+                    computeAndRender(row, isLeasing);
+                };
+
+                currentInput.addEventListener('input', onChange);
+                monthStartInput.addEventListener('input', onChange);
+
+                computeAndRender(row, isLeasing);
+            });
+
+            // פתיחה/סגירה של כל הקוביה בלחיצה על הכותרת (סגורה כברירת מחדל)
+            const header = tracker.querySelector('.km-header');
+            const arrow = header.querySelector('.col-arrow');
+            const toggle = () => {
+                const willOpen = tracker.classList.contains('collapsed');
+                tracker.classList.toggle('collapsed', !willOpen);
+                header.setAttribute('aria-expanded', String(willOpen));
+                arrow.textContent = willOpen ? '▾' : '▸';
+            };
+            header.addEventListener('click', toggle);
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle();
+                }
+            });
+        })();
 
         // ---- מחשבון תשואה: מחיר קנייה + שכ"ד חודשי -> תשואה שנתית באחוזים, עם שמירה מקומית ----
         (function initYieldCalculator() {
