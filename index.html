@@ -409,6 +409,77 @@
             color: #8bc34a;
         }
 
+        .km-history {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+
+        .km-history-list {
+            font-size: 0.7rem;
+            color: #cfe0ff;
+            margin-bottom: 6px;
+        }
+
+        .km-history-list .km-history-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+
+        .km-history-list .km-history-total {
+            font-weight: 700;
+            color: #e3ebfb;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            margin-top: 4px;
+            padding-top: 4px;
+        }
+
+        .km-history-edit {
+            display: flex;
+            gap: 6px;
+        }
+
+        .km-history-edit select,
+        .km-history-edit input {
+            flex: 1;
+            min-width: 0;
+            padding: 5px 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            font-size: 0.68rem;
+        }
+
+        .km-history-edit input {
+            direction: ltr;
+            text-align: left;
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        .km-history-edit input::-webkit-outer-spin-button,
+        .km-history-edit input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .km-history-edit button {
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 0.68rem;
+            cursor: pointer;
+        }
+
+        .km-history-edit button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
         /* ---- מחשבון תשואה ---- */
         .yield-calc {
             flex-shrink: 0;
@@ -1038,6 +1109,14 @@
                             <button type="button" class="km-check-btn">בדוק</button>
                         </div>
                         <div class="km-stats"></div>
+                        <div class="km-history">
+                            <div class="km-history-list"></div>
+                            <div class="km-history-edit">
+                                <select class="km-hist-month"></select>
+                                <input type="number" class="km-hist-km" placeholder="ק&quot;מ בחודש">
+                                <button type="button" class="km-hist-save">שמור</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="km-row" data-car="white">
@@ -1050,6 +1129,14 @@
                             <button type="button" class="km-check-btn">בדוק</button>
                         </div>
                         <div class="km-stats"></div>
+                        <div class="km-history">
+                            <div class="km-history-list"></div>
+                            <div class="km-history-edit">
+                                <select class="km-hist-month"></select>
+                                <input type="number" class="km-hist-km" placeholder="ק&quot;מ בחודש">
+                                <button type="button" class="km-hist-save">שמור</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="km-row km-row-simple" data-car="lip">
@@ -1762,6 +1849,46 @@
                 return Math.round(n).toLocaleString('en-US');
             }
 
+            const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+
+            function monthLabel(monthKey) {
+                const [y, m] = monthKey.split('-').map(Number);
+                return `${HEBREW_MONTHS[m]} ${y}`;
+            }
+
+            function compareMonthKeys(a, b) {
+                const [ay, am] = a.split('-').map(Number);
+                const [by, bm] = b.split('-').map(Number);
+                return ay - by || am - bm;
+            }
+
+            // 12 החודשים של שנת הליסינג הנוכחית (אוגוסט 2026 - יולי 2027), לרשימת "הוסף/ערוך היסטוריה"
+            function leaseYearMonthKeys() {
+                const keys = [];
+                const d = new Date(LEASE_YEAR_START);
+                for (let i = 0; i < 12; i++) {
+                    keys.push(monthKeyOf(d));
+                    d.setMonth(d.getMonth() + 1);
+                }
+                return keys;
+            }
+
+            function renderHistory(row, state) {
+                const listEl = row.querySelector('.km-history-list');
+                if (!listEl) return;
+
+                const entries = (state.history || []).slice().sort((a, b) => compareMonthKeys(a.monthKey, b.monthKey));
+
+                if (!entries.length) {
+                    listEl.innerHTML = '<div>אין עדיין פירוק חודשי שמור</div>';
+                    return;
+                }
+
+                const total = entries.reduce((sum, e) => sum + e.km, 0);
+                const rows = entries.map(e => `<div class="km-history-row"><span>${monthLabel(e.monthKey)}</span><span>${fmt(e.km)} ק"מ</span></div>`).join('');
+                listEl.innerHTML = rows + `<div class="km-history-row km-history-total"><span>סה"כ</span><span>${fmt(total)} ק"מ</span></div>`;
+            }
+
             // "תמונת מצב" חודשית: הקריאה הראשונה שמוזנת בכל חודש (בד"כ ב-1 לחודש) נשמרת
             // אוטומטית כנקודת ההתחלה של אותו חודש, וממנה מחושבת הנסועה החודשית -
             // בלי צורך בשדה נפרד. אם דילגתם על הזנה בדיוק ב-1 לחודש, ההזנה הבאה
@@ -1810,6 +1937,8 @@
                     }
                 }
 
+                if (isLeasing) renderHistory(row, state);
+
                 statsEl.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
             }
 
@@ -1820,13 +1949,21 @@
 
                 function applyReading(rawValue) {
                     const values = loadValues();
-                    const state = values[car] || { current: null, snapshotValue: null, snapshotMonthKey: null };
+                    const state = values[car] || { current: null, snapshotValue: null, snapshotMonthKey: null, history: [] };
+                    if (!state.history) state.history = [];
                     const parsed = parseFloat(rawValue);
 
                     if (!isNaN(parsed)) {
                         const monthKey = monthKeyOf(new Date());
                         if (state.snapshotMonthKey !== monthKey) {
-                            // חודש חדש (או קריאה ראשונה אי-פעם) - הערך הזה הופך לנקודת ההתחלה שלו
+                            // חודש חדש - סוגרים את החודש הקודם ושומרים אותו בהיסטוריה (אם היה לו נתון תקין)
+                            if (state.snapshotMonthKey != null && state.current != null && state.snapshotValue != null) {
+                                const completedKm = state.current - state.snapshotValue;
+                                const idx = state.history.findIndex(h => h.monthKey === state.snapshotMonthKey);
+                                if (idx >= 0) state.history[idx].km = completedKm;
+                                else state.history.push({ monthKey: state.snapshotMonthKey, km: completedKm });
+                            }
+                            // הערך החדש הופך לנקודת ההתחלה של החודש הנוכחי
                             state.snapshotValue = parsed;
                             state.snapshotMonthKey = monthKey;
                         }
@@ -1858,6 +1995,40 @@
                 currentInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') applyReading(currentInput.value);
                 });
+
+                // עריכה/הוספה ידנית של חודש עבר בהיסטוריה (למשל להזין רטרואקטיבית "אוגוסט: 960 ק"מ")
+                if (isLeasing) {
+                    const monthSelect = row.querySelector('.km-hist-month');
+                    const kmInput = row.querySelector('.km-hist-km');
+                    const saveBtn = row.querySelector('.km-hist-save');
+
+                    if (monthSelect) {
+                        monthSelect.innerHTML = leaseYearMonthKeys()
+                            .map(key => `<option value="${key}">${monthLabel(key)}</option>`)
+                            .join('');
+                    }
+
+                    if (saveBtn) {
+                        saveBtn.addEventListener('click', () => {
+                            const monthKey = monthSelect.value;
+                            const km = parseFloat(kmInput.value);
+                            if (!monthKey || isNaN(km)) return;
+
+                            const values = loadValues();
+                            const state = values[car] || { current: null, snapshotValue: null, snapshotMonthKey: null, history: [] };
+                            if (!state.history) state.history = [];
+
+                            const idx = state.history.findIndex(h => h.monthKey === monthKey);
+                            if (idx >= 0) state.history[idx].km = km;
+                            else state.history.push({ monthKey, km });
+
+                            values[car] = state;
+                            saveValues(values);
+                            renderHistory(row, state);
+                            kmInput.value = '';
+                        });
+                    }
+                }
             });
 
             // פתיחה/סגירה של כל הקוביה בלחיצה על הכותרת (סגורה כברירת מחדל)
