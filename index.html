@@ -1017,10 +1017,6 @@
                                 <label>ק"מ נוכחי</label>
                                 <input type="number" class="km-current" min="0" step="1">
                             </div>
-                            <div class="km-field">
-                                <label>ק"מ בתחילת החודש</label>
-                                <input type="number" class="km-month-start" min="0" step="1">
-                            </div>
                         </div>
                         <div class="km-stats"></div>
                     </div>
@@ -1032,10 +1028,6 @@
                                 <label>ק"מ נוכחי</label>
                                 <input type="number" class="km-current" min="0" step="1">
                             </div>
-                            <div class="km-field">
-                                <label>ק"מ בתחילת החודש</label>
-                                <input type="number" class="km-month-start" min="0" step="1">
-                            </div>
                         </div>
                         <div class="km-stats"></div>
                     </div>
@@ -1046,10 +1038,6 @@
                             <div class="km-field">
                                 <label>ק"מ נוכחי</label>
                                 <input type="number" class="km-current" min="0" step="1">
-                            </div>
-                            <div class="km-field">
-                                <label>ק"מ בתחילת החודש</label>
-                                <input type="number" class="km-month-start" min="0" step="1">
                             </div>
                         </div>
                         <div class="km-stats"></div>
@@ -1749,31 +1737,26 @@
                 }
             }
 
-            const stored = loadValues();
-
             function fmt(n) {
                 return Math.round(n).toLocaleString('en-US');
             }
 
-            function computeAndRender(row, isLeasing) {
-                const currentInput = row.querySelector('.km-current');
-                const monthStartInput = row.querySelector('.km-month-start');
+            // "תמונת מצב" חודשית: הקריאה הראשונה שמוזנת בכל חודש (בד"כ ב-1 לחודש) נשמרת
+            // אוטומטית כנקודת ההתחלה של אותו חודש, וממנה מחושבת הנסועה החודשית -
+            // בלי צורך בשדה נפרד. אם דילגתם על הזנה בדיוק ב-1 לחודש, ההזנה הבאה
+            // (גם אם באיחור) פשוט הופכת לנקודת ההתחלה של החודש הנוכחי.
+            function computeAndRender(row, isLeasing, state) {
                 const statsEl = row.querySelector('.km-stats');
-
-                const current = parseFloat(currentInput.value);
-                const monthStart = parseFloat(monthStartInput.value);
-
-                const hasCurrent = !isNaN(current) && current >= 0;
-                const hasMonthStart = !isNaN(monthStart) && monthStart >= 0;
+                const current = state.current;
+                const hasCurrent = current != null && !isNaN(current);
 
                 const lines = [];
 
-                // נסועה חודשית - זהה לכל הרכבים, כולל הליפ
-                if (hasCurrent && hasMonthStart) {
-                    const kmThisMonth = current - monthStart;
+                if (hasCurrent && state.snapshotValue != null) {
+                    const kmThisMonth = current - state.snapshotValue;
                     lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
                 } else {
-                    lines.push('נסעת החודש: — (מלאו את שני השדות)');
+                    lines.push('נסעת החודש: — (הזינו ק"מ נוכחי)');
                 }
 
                 if (isLeasing) {
@@ -1813,23 +1796,41 @@
                 const car = row.dataset.car;
                 const isLeasing = car === 'gray' || car === 'white';
                 const currentInput = row.querySelector('.km-current');
-                const monthStartInput = row.querySelector('.km-month-start');
 
-                const saved = stored[car] || {};
-                if (saved.current != null) currentInput.value = saved.current;
-                if (saved.monthStart != null) monthStartInput.value = saved.monthStart;
-
-                const onChange = () => {
+                function applyReading(rawValue) {
                     const values = loadValues();
-                    values[car] = { current: currentInput.value, monthStart: monthStartInput.value };
+                    const state = values[car] || { current: null, snapshotValue: null, snapshotMonthKey: null };
+                    const parsed = parseFloat(rawValue);
+
+                    if (!isNaN(parsed)) {
+                        const monthKey = monthKeyOf(new Date());
+                        if (state.snapshotMonthKey !== monthKey) {
+                            // חודש חדש (או קריאה ראשונה אי-פעם) - הערך הזה הופך לנקודת ההתחלה שלו
+                            state.snapshotValue = parsed;
+                            state.snapshotMonthKey = monthKey;
+                        }
+                        state.current = parsed;
+                    } else {
+                        state.current = null;
+                    }
+
+                    values[car] = state;
                     saveValues(values);
-                    computeAndRender(row, isLeasing);
-                };
+                    computeAndRender(row, isLeasing, state);
+                    return state;
+                }
 
-                currentInput.addEventListener('input', onChange);
-                monthStartInput.addEventListener('input', onChange);
+                const stored = loadValues();
+                const saved = stored[car];
+                if (saved && saved.current != null) {
+                    currentInput.value = saved.current;
+                }
 
-                computeAndRender(row, isLeasing);
+                // מריצים את הבדיקה גם בטעינת הדף (לא רק בהקלדה) - כך שגם אם נפתח הדף
+                // בחודש חדש בלי להזין כלום, הערך השמור הופך אוטומטית לנקודת ההתחלה של החודש
+                applyReading(currentInput.value);
+
+                currentInput.addEventListener('input', () => applyReading(currentInput.value));
             });
 
             // פתיחה/סגירה של כל הקוביה בלחיצה על הכותרת (סגורה כברירת מחדל)
