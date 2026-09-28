@@ -316,8 +316,12 @@
             display: none;
         }
 
+        /* מוגבל בגובה + גולל בתוך עצמו - כדי שפתיחת הקוביה לא תדחוף את מחשבון התשואה
+           מתחתיה מחוץ לתצוגה בדסקטופ (שם כל הדף נעול לגובה המסך, בלי גלילה כללית) */
         .km-tracker:not(.collapsed) .km-body {
             display: block;
+            max-height: 46vh;
+            overflow-y: auto;
         }
 
         .km-row {
@@ -433,6 +437,54 @@
             border-top: 1px solid rgba(255, 255, 255, 0.15);
             margin-top: 4px;
             padding-top: 4px;
+        }
+
+        .km-chart-wrap {
+            margin-top: 8px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .km-chart-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #cfe0ff;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .km-chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            font-size: 0.65rem;
+            color: #cfe0ff;
+            margin-bottom: 6px;
+        }
+
+        .km-swatch {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            border-radius: 2px;
+            margin-left: 4px;
+            vertical-align: middle;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .km-chart-empty {
+            font-size: 0.72rem;
+            color: #9fb4dd;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .km-chart-scroll {
+            overflow-x: auto;
+        }
+
+        #kmChartSvg {
+            display: block;
         }
 
         /* ---- מחשבון תשואה ---- */
@@ -852,6 +904,12 @@
                 overflow-y: visible;
                 max-height: none;
             }
+
+            /* גם קוביית הקילומטראז' זורמת עם שאר הדף בנייד, בלי הגבלת גובה פנימית */
+            .km-tracker:not(.collapsed) .km-body {
+                max-height: none;
+                overflow-y: visible;
+            }
         }
 
         /* ---- דוח PDF להדפסה - מוסתר במסך, מוצג רק ב-@media print ---- */
@@ -1094,6 +1152,19 @@
                             <button type="button" class="km-check-btn">בדוק</button>
                         </div>
                         <div class="km-stats"></div>
+                    </div>
+
+                    <div class="km-chart-wrap">
+                        <div class="km-chart-title">📊 נסועה חודשית - שלושת הרכבים</div>
+                        <div class="km-chart-legend">
+                            <span><i class="km-swatch" style="background:#b0bec5"></i>אפור</span>
+                            <span><i class="km-swatch" style="background:#eceff1"></i>לבן</span>
+                            <span><i class="km-swatch" style="background:#ffd166"></i>ליפ</span>
+                        </div>
+                        <div class="km-chart-empty" id="kmChartEmpty">אין עדיין נתונים לגרף</div>
+                        <div class="km-chart-scroll" id="kmChartScroll">
+                            <svg id="kmChartSvg"></svg>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1833,6 +1904,76 @@
                 return YEAR_BASELINE + priorKm;
             }
 
+            // ---- גרף עמודות: כמה נסע כל רכב בכל חודש (מבוסס רק על נתונים ששמורים בפועל) ----
+            const CAR_COLORS = { gray: '#b0bec5', white: '#eceff1', lip: '#ffd166' };
+            const CAR_ORDER = ['gray', 'white', 'lip'];
+
+            function getCarMonthlySeries(car) {
+                const values = loadValues();
+                const state = values[car] || { current: null, openMonthKey: null, history: [] };
+                const series = {};
+                (state.history || []).forEach(h => { series[h.monthKey] = h.km; });
+                if (state.openMonthKey != null && state.current != null) {
+                    series[state.openMonthKey] = state.current - kmBeforeMonth(state, state.openMonthKey);
+                }
+                return series;
+            }
+
+            function renderKmChart() {
+                const svgEl = document.getElementById('kmChartSvg');
+                const scrollEl = document.getElementById('kmChartScroll');
+                const emptyEl = document.getElementById('kmChartEmpty');
+                if (!svgEl) return;
+
+                const nowKey = monthKeyOf(new Date());
+                const seriesByCar = {};
+                CAR_ORDER.forEach(car => { seriesByCar[car] = getCarMonthlySeries(car); });
+
+                const monthSet = new Set();
+                CAR_ORDER.forEach(car => Object.keys(seriesByCar[car]).forEach(k => monthSet.add(k)));
+                const months = [...monthSet]
+                    .filter(k => compareMonthKeys(k, nowKey) <= 0)
+                    .sort(compareMonthKeys);
+
+                if (!months.length) {
+                    scrollEl.style.display = 'none';
+                    emptyEl.style.display = 'block';
+                    return;
+                }
+                scrollEl.style.display = '';
+                emptyEl.style.display = 'none';
+
+                const maxKm = Math.max(100, ...months.flatMap(m => CAR_ORDER.map(car => seriesByCar[car][m] || 0)));
+
+                const perMonthWidth = 60;
+                const chartHeight = 100;
+                const width = Math.max(260, months.length * perMonthWidth);
+                const height = chartHeight + 20;
+                const barGap = 2;
+                const groupPad = 6;
+                const barWidth = (perMonthWidth - groupPad * 2 - barGap * 2) / 3;
+
+                let svg = '';
+                months.forEach((m, i) => {
+                    const groupX = i * perMonthWidth;
+                    CAR_ORDER.forEach((car, ci) => {
+                        const km = Math.max(0, seriesByCar[car][m] || 0);
+                        const barH = Math.round((km / maxKm) * chartHeight);
+                        const x = groupX + groupPad + ci * (barWidth + barGap);
+                        const y = chartHeight - barH;
+                        const title = `${monthLabel(m)}: ${fmt(km)} ק"מ`;
+                        svg += `<rect x="${x}" y="${y}" width="${barWidth.toFixed(1)}" height="${barH}" fill="${CAR_COLORS[car]}" rx="2"><title>${title}</title></rect>`;
+                    });
+                    const shortLabel = monthLabel(m).split(' ')[0].slice(0, 3);
+                    svg += `<text x="${groupX + perMonthWidth / 2}" y="${chartHeight + 13}" text-anchor="middle" font-size="9" fill="#cfe0ff">${shortLabel}</text>`;
+                });
+
+                svgEl.setAttribute('viewBox', `0 0 ${width} ${height}`);
+                svgEl.setAttribute('width', String(width));
+                svgEl.setAttribute('height', String(height));
+                svgEl.innerHTML = svg;
+            }
+
             // הקריאה הראשונה שמוזנת בכל חודש (בד"כ ב-1 לחודש) פותחת אותו כ"חודש נוכחי";
             // כשמתחיל חודש חדש, הקודם נסגר ונשמר בהיסטוריה. הנסועה של החודש הפתוח
             // מחושבת תמיד מול הבסיס השנתי + כל מה שכבר נסגר בהיסטוריה (כולל תיקונים ידניים).
@@ -1890,32 +2031,42 @@
                 const isLeasing = car === 'gray' || car === 'white';
                 const currentInput = row.querySelector('.km-current');
 
+                // רק הבדיקה הראשונה בכל חודש נשמרת (ונועלת את החודש); כל בדיקה נוספת
+                // באותו חודש היא תמונת מצב זמנית בלבד - מוצגת, לא נשמרת ולא דורסת את הנעול
                 function applyReading(rawValue) {
                     const values = loadValues();
                     const state = values[car] || { current: null, openMonthKey: null, history: [] };
                     if (!state.history) state.history = [];
                     const parsed = parseFloat(rawValue);
 
-                    if (!isNaN(parsed)) {
-                        const monthKey = monthKeyOf(new Date());
-                        if (state.openMonthKey !== monthKey) {
-                            // חודש חדש - סוגרים את החודש הקודם ושומרים אותו בהיסטוריה (אם היה לו נתון תקין)
-                            if (state.openMonthKey != null && state.current != null) {
-                                const completedKm = state.current - kmBeforeMonth(state, state.openMonthKey);
-                                const idx = state.history.findIndex(h => h.monthKey === state.openMonthKey);
-                                if (idx >= 0) state.history[idx].km = completedKm;
-                                else state.history.push({ monthKey: state.openMonthKey, km: completedKm });
-                            }
-                            state.openMonthKey = monthKey;
-                        }
-                        state.current = parsed;
-                    } else {
-                        state.current = null;
+                    if (isNaN(parsed)) {
+                        computeAndRender(row, isLeasing, state);
+                        renderKmChart();
+                        return state;
                     }
 
-                    values[car] = state;
-                    saveValues(values);
-                    computeAndRender(row, isLeasing, state);
+                    const monthKey = monthKeyOf(new Date());
+
+                    if (state.openMonthKey !== monthKey) {
+                        // הבדיקה הראשונה החודש - סוגרים את החודש הקודם (אם היה) ונועלים את הערך הזה כרשמי
+                        if (state.openMonthKey != null && state.current != null) {
+                            const completedKm = state.current - kmBeforeMonth(state, state.openMonthKey);
+                            const idx = state.history.findIndex(h => h.monthKey === state.openMonthKey);
+                            if (idx >= 0) state.history[idx].km = completedKm;
+                            else state.history.push({ monthKey: state.openMonthKey, km: completedKm });
+                        }
+                        state.openMonthKey = monthKey;
+                        state.current = parsed;
+
+                        values[car] = state;
+                        saveValues(values);
+                        computeAndRender(row, isLeasing, state);
+                    } else {
+                        const previewState = Object.assign({}, state, { current: parsed });
+                        computeAndRender(row, isLeasing, previewState);
+                    }
+
+                    renderKmChart();
                     return state;
                 }
 
