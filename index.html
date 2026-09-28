@@ -1978,6 +1978,19 @@
                     return state;
                 }
 
+                // נתון ידוע מראש: הליסינג האפור נסע 960 ק"מ באוגוסט 2026 - מוזן פעם אחת אוטומטית,
+                // בלי צורך בטופס ידני. לא דורס עריכה עתידית של המשתמש לחודש הזה.
+                if (car === 'gray') {
+                    const seedValues = loadValues();
+                    const seedState = seedValues.gray || { current: null, snapshotValue: null, snapshotMonthKey: null, history: [] };
+                    if (!seedState.history) seedState.history = [];
+                    if (!seedState.history.some(h => h.monthKey === '2026-7')) {
+                        seedState.history.push({ monthKey: '2026-7', km: 960 });
+                        seedValues.gray = seedState;
+                        saveValues(seedValues);
+                    }
+                }
+
                 const stored = loadValues();
                 const saved = stored[car];
                 if (saved && saved.current != null) {
