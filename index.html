@@ -2264,26 +2264,40 @@
                 }
             }
 
-            function save() {
+            function loadYieldValues() {
                 try {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify({ price: priceInput.value, rent: rentInput.value }));
+                    return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function save() {
+                const values = { price: priceInput.value, rent: rentInput.value };
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
                 } catch (e) {
                     // לא קריטי אם לא ניתן לשמור מקומית
                 }
+
+                // מסנכרן גם לענן, כדי שהערכים יופיעו גם בשאר המכשירים
+                fetch(firebaseUrl('yield-calc'), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(values)
+                }).catch(err => {
+                    console.error('סנכרון מחשבון התשואה לענן נכשל (נשמר מקומית בלבד):', err);
+                });
             }
 
             // ברירות מחדל - רק אם המשתמש עוד לא שמר ערכים משלו
             priceInput.value = '3000000';
             rentInput.value = '8000';
 
-            try {
-                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-                if (saved) {
-                    priceInput.value = saved.price || '3000000';
-                    rentInput.value = saved.rent || '8000';
-                }
-            } catch (e) {
-                // התעלמות משמירה פגומה
+            const saved = loadYieldValues();
+            if (saved) {
+                priceInput.value = saved.price || '3000000';
+                rentInput.value = saved.rent || '8000';
             }
 
             [priceInput, rentInput].forEach(input => {
@@ -2294,6 +2308,70 @@
             });
 
             calculate();
+
+            // סנכרון חי בין מכשירים: לעולם לא דורס שדה עם ערך אמיתי בגלל שהצד השני ריק -
+            // אם רק לצד אחד יש ערך, משמרים אותו ודוחפים אותו הלאה לצד השני
+            (function connectYieldSync() {
+                let es;
+                try {
+                    es = new EventSource(firebaseUrl('yield-calc'));
+                } catch (e) {
+                    return;
+                }
+
+                function pickField(localVal, cloudVal) {
+                    const cloudEmpty = cloudVal == null || cloudVal === '';
+                    const localEmpty = localVal == null || localVal === '';
+                    if (cloudEmpty && !localEmpty) return localVal;
+                    if (!cloudEmpty) return cloudVal;
+                    return localVal;
+                }
+
+                function mergeAndApply(cloudValues) {
+                    const local = loadYieldValues() || {};
+                    const cloud = cloudValues || {};
+                    const merged = {
+                        price: pickField(local.price, cloud.price),
+                        rent: pickField(local.rent, cloud.rent)
+                    };
+
+                    const changed = JSON.stringify(merged) !== JSON.stringify(cloud);
+
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                    } catch (e) {
+                        // לא קריטי
+                    }
+
+                    if (merged.price) priceInput.value = merged.price;
+                    if (merged.rent) rentInput.value = merged.rent;
+                    calculate();
+
+                    if (changed) {
+                        fetch(firebaseUrl('yield-calc'), {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(merged)
+                        }).catch(() => {});
+                    }
+                }
+
+                es.addEventListener('put', (e) => {
+                    try {
+                        const parsed = JSON.parse(e.data);
+                        mergeAndApply(parsed.data || {});
+                    } catch (err) {
+                        console.error('שגיאה בפענוח סנכרון מחשבון תשואה:', err);
+                    }
+                });
+
+                es.addEventListener('patch', () => {
+                    fetch(firebaseUrl('yield-calc'))
+                        .then(r => r.json())
+                        .then(cloudValues => mergeAndApply(cloudValues || {}))
+                        .catch(() => {});
+                });
+            })();
         })();
 
         // ---- סנכרון חי מול הגיליון (Google Sheets) - JSONP, בלי צורך בשרת/מפתח ----
