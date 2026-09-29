@@ -1860,6 +1860,16 @@
                 } catch (e) {
                     // לא קריטי אם אי אפשר לשמור מקומית
                 }
+
+                // מסנכרן גם לענן (Firebase) - כדי שהנתונים יופיעו גם בשאר המכשירים,
+                // בדיוק כמו שהמשימות כבר מסונכרנות
+                fetch(firebaseUrl('km-tracker'), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(values)
+                }).catch(err => {
+                    console.error('סנכרון קילומטראז\' לענן נכשל (נשמר מקומית בלבד):', err);
+                });
             }
 
             function fmt(n) {
@@ -2109,11 +2119,15 @@
             // פתיחה/סגירה של כל הקוביה בלחיצה על הכותרת (סגורה כברירת מחדל)
             const header = tracker.querySelector('.km-header');
             const arrow = header.querySelector('.col-arrow');
+            const body = tracker.querySelector('.km-body');
             const toggle = () => {
                 const willOpen = tracker.classList.contains('collapsed');
                 tracker.classList.toggle('collapsed', !willOpen);
                 header.setAttribute('aria-expanded', String(willOpen));
                 arrow.textContent = willOpen ? '▾' : '▸';
+                // תמיד נפתח מהתחלה (למעלה) - בלי זה הגלילה הפנימית לפעמים נשארת באמצע
+                // מסבב קודם ונראה כאילו התצוגה "קטועה"
+                if (willOpen && body) body.scrollTop = 0;
             };
             header.addEventListener('click', toggle);
             header.addEventListener('keydown', (e) => {
@@ -2122,6 +2136,62 @@
                     toggle();
                 }
             });
+
+            // סנכרון חי בין מכשירים לנתוני הקילומטראז' (אותו מנגנון Firebase שכבר משמש למשימות)
+            (function connectKmSync() {
+                let es;
+                let firstEvent = true;
+
+                try {
+                    es = new EventSource(firebaseUrl('km-tracker'));
+                } catch (e) {
+                    return;
+                }
+
+                function applyCloudValues(cloudValues) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudValues));
+                    tracker.querySelectorAll('.km-row').forEach(row => {
+                        const rowCar = row.dataset.car;
+                        const rowIsLeasing = rowCar === 'gray' || rowCar === 'white';
+                        const state = cloudValues[rowCar] || { current: null, openMonthKey: null, history: [] };
+                        const input = row.querySelector('.km-current');
+                        if (input) input.value = state.current != null ? state.current : '';
+                        computeAndRender(row, rowIsLeasing, state);
+                    });
+                    renderKmChart();
+                }
+
+                es.addEventListener('put', (e) => {
+                    try {
+                        const parsed = JSON.parse(e.data);
+                        const cloudValues = parsed.data;
+                        const cloudIsEmpty = !cloudValues || Object.keys(cloudValues).length === 0;
+
+                        if (firstEvent && cloudIsEmpty) {
+                            // בהתחברות הראשונה: הענן עוד ריק, אבל אם כבר יש נתונים מקומיים
+                            // (במכשיר הזה) - מעלים אותם לענן במקום למחוק אותם
+                            const localValues = loadValues();
+                            if (Object.keys(localValues).length > 0) {
+                                saveValues(localValues);
+                            }
+                        } else if (cloudValues && typeof cloudValues === 'object') {
+                            applyCloudValues(cloudValues);
+                        }
+                        firstEvent = false;
+                    } catch (err) {
+                        console.error('שגיאה בפענוח סנכרון קילומטראז\':', err);
+                    }
+                });
+
+                es.addEventListener('patch', () => {
+                    fetch(firebaseUrl('km-tracker'))
+                        .then(r => r.json())
+                        .then(cloudValues => {
+                            if (cloudValues && typeof cloudValues === 'object') applyCloudValues(cloudValues);
+                        })
+                        .catch(() => {});
+                });
+            })();
         })();
 
         // ---- מחשבון תשואה: מחיר קנייה + שכ"ד חודשי -> תשואה שנתית באחוזים, עם שמירה מקומית ----
