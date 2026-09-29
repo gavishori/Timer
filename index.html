@@ -2083,15 +2083,16 @@
                     return state;
                 }
 
-                // נתון ידוע מראש: הליסינג האפור נסע 960 ק"מ באוגוסט 2026 - מוזן פעם אחת אוטומטית,
-                // בלי צורך בטופס ידני. לא דורס עריכה עתידית של המשתמש לחודש הזה.
-                if (car === 'gray') {
+                // נתונים ידועים מראש לאוגוסט 2026 - מוזנים פעם אחת אוטומטית, בלי טופס ידני.
+                // לא דורסים עריכה/עדכון עתידי של המשתמש לחודש הזה.
+                const AUGUST_SEED = { gray: 960, white: 630 };
+                if (car in AUGUST_SEED) {
                     const seedValues = loadValues();
-                    const seedState = seedValues.gray || { current: null, openMonthKey: null, history: [] };
+                    const seedState = seedValues[car] || { current: null, openMonthKey: null, history: [] };
                     if (!seedState.history) seedState.history = [];
                     if (!seedState.history.some(h => h.monthKey === '2026-7')) {
-                        seedState.history.push({ monthKey: '2026-7', km: 960 });
-                        seedValues.gray = seedState;
+                        seedState.history.push({ monthKey: '2026-7', km: AUGUST_SEED[car] });
+                        seedValues[car] = seedState;
                         saveValues(seedValues);
                     }
                 }
@@ -2150,17 +2151,24 @@
                 // ממזג מצב של רכב אחד משני מקורות (מקומי + ענן) - לעולם לא דורס רכב
                 // שיש לו נתון אמיתי רק כי המקור השני לא הכיר אותו בכלל
                 function mergeCarState(local, cloud) {
-                    if (!local || local.current == null) return cloud || local || { current: null, openMonthKey: null, history: [] };
-                    if (!cloud || cloud.current == null) return local;
+                    local = local || { current: null, openMonthKey: null, history: [] };
+                    cloud = cloud || { current: null, openMonthKey: null, history: [] };
 
-                    // לשניהם יש current - מעדיפים את מי שה"חודש הפתוח" שלו מאוחר יותר,
-                    // ואם זהה - את הערך הגבוה יותר (סביר שנרשם אחריו כרונולוגית)
-                    const cmp = (local.openMonthKey && cloud.openMonthKey)
-                        ? compareMonthKeys(local.openMonthKey, cloud.openMonthKey)
-                        : 0;
-                    const base = cmp > 0 ? local : (cmp < 0 ? cloud : (local.current >= cloud.current ? local : cloud));
+                    // בוחרים את ה"current"/"openMonthKey" ממי שנראה עדכני יותר - אבל זה
+                    // *לא* קובע מה קורה להיסטוריה: היא תמיד מאוחדת בנפרד למטה, כדי שלא
+                    // לאבד בטעות חודש סגור רק כי הצד השני לא הכיר current בכלל
+                    let base;
+                    if (local.current == null) base = cloud;
+                    else if (cloud.current == null) base = local;
+                    else {
+                        const cmp = (local.openMonthKey && cloud.openMonthKey)
+                            ? compareMonthKeys(local.openMonthKey, cloud.openMonthKey)
+                            : 0;
+                        base = cmp > 0 ? local : (cmp < 0 ? cloud : (local.current >= cloud.current ? local : cloud));
+                    }
 
-                    // היסטוריה: איחוד לפי חודש, לוקחים את הערך הגבוה יותר לכל חודש
+                    // היסטוריה: תמיד איחוד לפי חודש (איחוד מלא, לא תלוי מי "ניצח" למעלה),
+                    // לוקחים את הערך הגבוה יותר לכל חודש
                     const historyMap = {};
                     (cloud.history || []).forEach(h => { historyMap[h.monthKey] = h.km; });
                     (local.history || []).forEach(h => {
