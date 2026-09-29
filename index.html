@@ -2140,7 +2140,6 @@
             // סנכרון חי בין מכשירים לנתוני הקילומטראז' (אותו מנגנון Firebase שכבר משמש למשימות)
             (function connectKmSync() {
                 let es;
-                let firstEvent = true;
 
                 try {
                     es = new EventSource(firebaseUrl('km-tracker'));
@@ -2148,36 +2147,71 @@
                     return;
                 }
 
-                function applyCloudValues(cloudValues) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(cloudValues));
+                // ממזג מצב של רכב אחד משני מקורות (מקומי + ענן) - לעולם לא דורס רכב
+                // שיש לו נתון אמיתי רק כי המקור השני לא הכיר אותו בכלל
+                function mergeCarState(local, cloud) {
+                    if (!local || local.current == null) return cloud || local || { current: null, openMonthKey: null, history: [] };
+                    if (!cloud || cloud.current == null) return local;
+
+                    // לשניהם יש current - מעדיפים את מי שה"חודש הפתוח" שלו מאוחר יותר,
+                    // ואם זהה - את הערך הגבוה יותר (סביר שנרשם אחריו כרונולוגית)
+                    const cmp = (local.openMonthKey && cloud.openMonthKey)
+                        ? compareMonthKeys(local.openMonthKey, cloud.openMonthKey)
+                        : 0;
+                    const base = cmp > 0 ? local : (cmp < 0 ? cloud : (local.current >= cloud.current ? local : cloud));
+
+                    // היסטוריה: איחוד לפי חודש, לוקחים את הערך הגבוה יותר לכל חודש
+                    const historyMap = {};
+                    (cloud.history || []).forEach(h => { historyMap[h.monthKey] = h.km; });
+                    (local.history || []).forEach(h => {
+                        if (!(h.monthKey in historyMap) || h.km > historyMap[h.monthKey]) historyMap[h.monthKey] = h.km;
+                    });
+
+                    return {
+                        current: base.current,
+                        openMonthKey: base.openMonthKey,
+                        history: Object.keys(historyMap).map(k => ({ monthKey: k, km: historyMap[k] }))
+                    };
+                }
+
+                function mergeAndApply(cloudValues) {
+                    const localValues = loadValues();
+                    const merged = {};
+                    let changed = false;
+
+                    CAR_ORDER.forEach(car => {
+                        const localState = localValues[car];
+                        const cloudState = (cloudValues && cloudValues[car]) || null;
+                        merged[car] = mergeCarState(localState, cloudState);
+                        if (JSON.stringify(merged[car]) !== JSON.stringify(cloudState)) changed = true;
+                    });
+
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+
                     tracker.querySelectorAll('.km-row').forEach(row => {
                         const rowCar = row.dataset.car;
                         const rowIsLeasing = rowCar === 'gray' || rowCar === 'white';
-                        const state = cloudValues[rowCar] || { current: null, openMonthKey: null, history: [] };
+                        const state = merged[rowCar];
                         const input = row.querySelector('.km-current');
                         if (input) input.value = state.current != null ? state.current : '';
                         computeAndRender(row, rowIsLeasing, state);
                     });
                     renderKmChart();
+
+                    // אם המיזוג הוסיף/שינה משהו שלא היה בענן (למשל נתון מקומי שהענן לא הכיר) - מעדכנים את הענן
+                    if (changed) {
+                        fetch(firebaseUrl('km-tracker'), {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(merged)
+                        }).catch(() => {});
+                    }
                 }
 
                 es.addEventListener('put', (e) => {
                     try {
                         const parsed = JSON.parse(e.data);
-                        const cloudValues = parsed.data;
-                        const cloudIsEmpty = !cloudValues || Object.keys(cloudValues).length === 0;
-
-                        if (firstEvent && cloudIsEmpty) {
-                            // בהתחברות הראשונה: הענן עוד ריק, אבל אם כבר יש נתונים מקומיים
-                            // (במכשיר הזה) - מעלים אותם לענן במקום למחוק אותם
-                            const localValues = loadValues();
-                            if (Object.keys(localValues).length > 0) {
-                                saveValues(localValues);
-                            }
-                        } else if (cloudValues && typeof cloudValues === 'object') {
-                            applyCloudValues(cloudValues);
-                        }
-                        firstEvent = false;
+                        mergeAndApply(parsed.data || {});
                     } catch (err) {
                         console.error('שגיאה בפענוח סנכרון קילומטראז\':', err);
                     }
@@ -2186,9 +2220,7 @@
                 es.addEventListener('patch', () => {
                     fetch(firebaseUrl('km-tracker'))
                         .then(r => r.json())
-                        .then(cloudValues => {
-                            if (cloudValues && typeof cloudValues === 'object') applyCloudValues(cloudValues);
-                        })
+                        .then(cloudValues => mergeAndApply(cloudValues || {}))
                         .catch(() => {});
                 });
             })();
