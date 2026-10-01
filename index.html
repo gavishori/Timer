@@ -2083,15 +2083,25 @@
                     return state;
                 }
 
-                // נתונים ידועים מראש לאוגוסט 2026 - מוזנים פעם אחת אוטומטית, בלי טופס ידני.
-                // לא דורסים עריכה/עדכון עתידי של המשתמש לחודש הזה.
-                const AUGUST_SEED = { gray: 960, white: 630 };
-                if (car in AUGUST_SEED) {
+                // נתונים ידועים מראש לחודשים שלא נמדדו דרך האפליקציה - מוזנים פעם אחת אוטומטית,
+                // בלי טופס ידני. לא דורסים עריכה/עדכון עתידי של המשתמש לחודש הזה.
+                const SEED_HISTORY = {
+                    gray: [{ monthKey: '2026-7', km: 960 }],   // אוגוסט 2026
+                    white: [{ monthKey: '2026-7', km: 630 }],  // אוגוסט 2026
+                    lip: [{ monthKey: '2026-10', km: 1500 }]   // נובמבר 2026
+                };
+                if (car in SEED_HISTORY) {
                     const seedValues = loadValues();
                     const seedState = seedValues[car] || { current: null, openMonthKey: null, history: [] };
                     if (!seedState.history) seedState.history = [];
-                    if (!seedState.history.some(h => h.monthKey === '2026-7')) {
-                        seedState.history.push({ monthKey: '2026-7', km: AUGUST_SEED[car] });
+                    let seeded = false;
+                    SEED_HISTORY[car].forEach(entry => {
+                        if (!seedState.history.some(h => h.monthKey === entry.monthKey)) {
+                            seedState.history.push(entry);
+                            seeded = true;
+                        }
+                    });
+                    if (seeded) {
                         seedValues[car] = seedState;
                         saveValues(seedValues);
                     }
@@ -2108,11 +2118,16 @@
                 applyReading(currentInput.value);
 
                 // שומרים ומחשבים רק בלחיצה מפורשת על "בדוק" (לא תוך כדי הקלדה) - כדי שערך חלקי
-                // באמצע ההקלדה (למשל "2" לפני שמסיימים "20000") לא ייחשב בטעות כקריאת הרכב
+                // באמצע ההקלדה (למשל "2" לפני שמסיימים "20000") לא ייחשב בטעות כקריאת הרכב.
+                // אחרי בדיקה השדה מתרוקן - כדי שלא יישאר בו מספר ישן שנראה כמו "בדיקה קודמת" שכוחה
                 const checkBtn = row.querySelector('.km-check-btn');
-                checkBtn.addEventListener('click', () => applyReading(currentInput.value));
+                const runCheck = () => {
+                    applyReading(currentInput.value);
+                    currentInput.value = '';
+                };
+                checkBtn.addEventListener('click', runCheck);
                 currentInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') applyReading(currentInput.value);
+                    if (e.key === 'Enter') runCheck();
                 });
 
             });
