@@ -1990,7 +1990,7 @@
             // הקריאה הראשונה שמוזנת בכל חודש (בד"כ ב-1 לחודש) פותחת אותו כ"חודש נוכחי";
             // כשמתחיל חודש חדש, הקודם נסגר ונשמר בהיסטוריה. הנסועה של החודש הפתוח
             // מחושבת תמיד מול הבסיס השנתי + כל מה שכבר נסגר בהיסטוריה (כולל תיקונים ידניים).
-            function computeAndRender(row, isLeasing, state, justClosed) {
+            function computeAndRender(row, isLeasing, state) {
                 const car = row.dataset.car;
                 const baseline = BASELINES[car] || 0;
                 const statsEl = row.querySelector('.km-stats');
@@ -1999,16 +1999,20 @@
 
                 const lines = [];
 
-                if (justClosed) {
-                    // זו הבדיקה הראשונה של חודש חדש - מציגים כמה נסענו בחודש שהסתיים ברגע זה,
-                    // במקום "0 ק"מ" לא-אינפורמטיבי על החודש החדש שעתה נפתח
-                    const monthName = HEBREW_MONTHS[Number(justClosed.monthKey.split('-')[1])];
-                    lines.push(`בחודש ${monthName} נסעת <strong>${fmt(justClosed.km)}</strong> ק"מ`);
-                } else if (hasCurrent && state.openMonthKey != null) {
+                // "נסעת החודש" - תמיד מוצג: ההזנה הנוכחית (גם אם זו רק הצצה) פחות ההזנה
+                // שננעלה ב-1 לחודש הנוכחי
+                if (hasCurrent && state.openMonthKey != null) {
                     const kmThisMonth = current - kmBeforeMonth(state, state.openMonthKey, baseline);
                     lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
                 } else {
                     lines.push('נסעת החודש: — (הזינו ק"מ נוכחי)');
+                }
+
+                // בנוסף - תמיד מוצג כמה נסעו בחודש הקודם שכבר נסגר (אם יש כזה בהיסטוריה)
+                const lastClosed = (state.history || []).slice().sort((a, b) => compareMonthKeys(a.monthKey, b.monthKey)).pop();
+                if (lastClosed) {
+                    const monthName = HEBREW_MONTHS[Number(lastClosed.monthKey.split('-')[1])];
+                    lines.push(`בחודש ${monthName} נסעת <strong>${fmt(lastClosed.km)}</strong> ק"מ`);
                 }
 
                 if (isLeasing) {
@@ -2069,20 +2073,18 @@
 
                     if (state.openMonthKey !== monthKey) {
                         // הבדיקה הראשונה החודש - סוגרים את החודש הקודם (אם היה) ונועלים את הערך הזה כרשמי
-                        let justClosed = null;
                         if (state.openMonthKey != null && state.current != null) {
                             const completedKm = state.current - kmBeforeMonth(state, state.openMonthKey, BASELINES[car] || 0);
                             const idx = state.history.findIndex(h => h.monthKey === state.openMonthKey);
                             if (idx >= 0) state.history[idx].km = completedKm;
                             else state.history.push({ monthKey: state.openMonthKey, km: completedKm });
-                            justClosed = { monthKey: state.openMonthKey, km: completedKm };
                         }
                         state.openMonthKey = monthKey;
                         state.current = parsed;
 
                         values[car] = state;
                         saveValues(values);
-                        computeAndRender(row, isLeasing, state, justClosed);
+                        computeAndRender(row, isLeasing, state);
                     } else {
                         const previewState = Object.assign({}, state, { current: parsed });
                         computeAndRender(row, isLeasing, previewState);
