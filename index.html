@@ -2009,7 +2009,12 @@
                 }
 
                 // בנוסף - תמיד מוצג כמה נסעו בחודש הקודם שכבר נסגר (אם יש כזה בהיסטוריה)
-                const lastClosed = (state.history || []).slice().sort((a, b) => compareMonthKeys(a.monthKey, b.monthKey)).pop();
+                // רק חודשים שבאמת קדמו לחודש הפתוח הנוכחי - כדי שרישום עתידי שהוזן מראש
+                // (כמו נתון חודש קדימה) לא ייחשב בטעות ל"חודש הקודם שנסגר"
+                const lastClosed = (state.history || [])
+                    .filter(h => state.openMonthKey == null || compareMonthKeys(h.monthKey, state.openMonthKey) < 0)
+                    .sort((a, b) => compareMonthKeys(a.monthKey, b.monthKey))
+                    .pop();
                 if (lastClosed) {
                     const monthName = HEBREW_MONTHS[Number(lastClosed.monthKey.split('-')[1])];
                     lines.push(`בחודש ${monthName} נסעת <strong>${fmt(lastClosed.km)}</strong> ק"מ`);
