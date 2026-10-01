@@ -2310,7 +2310,7 @@
             }
 
             function save() {
-                const values = { price: priceInput.value, rent: rentInput.value };
+                const values = { price: priceInput.value, rent: rentInput.value, updatedAt: Date.now() };
                 try {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
                 } catch (e) {
@@ -2364,13 +2364,32 @@
                     return localVal;
                 }
 
+                // מי שנערך לאחרונה בפועל (לפי updatedAt) מנצח כמקשה אחת - לא "מי שלא ריק",
+                // כי "מי שלא ריק" גרם לכך שמכשיר ישן/רדום עם ערך ישן דרס לצמיתות עריכה
+                // אמיתית וטרייה שנעשתה במכשיר אחר. אם אין חותמת זמן בכלל (נתון ישן), חוזרים
+                // לשיטה הישנה כגיבוי בלבד.
                 function mergeAndApply(cloudValues) {
                     const local = loadYieldValues() || {};
                     const cloud = cloudValues || {};
-                    const merged = {
-                        price: pickField(local.price, cloud.price),
-                        rent: pickField(local.rent, cloud.rent)
-                    };
+                    const localTime = local.updatedAt || 0;
+                    const cloudTime = cloud.updatedAt || 0;
+
+                    let merged;
+                    if (cloudTime > localTime) {
+                        merged = {
+                            price: (cloud.price != null && cloud.price !== '') ? cloud.price : local.price,
+                            rent: (cloud.rent != null && cloud.rent !== '') ? cloud.rent : local.rent,
+                            updatedAt: cloudTime
+                        };
+                    } else if (localTime > cloudTime) {
+                        merged = { price: local.price, rent: local.rent, updatedAt: localTime };
+                    } else {
+                        merged = {
+                            price: pickField(local.price, cloud.price),
+                            rent: pickField(local.rent, cloud.rent),
+                            updatedAt: Math.max(localTime, cloudTime)
+                        };
+                    }
 
                     const changed = JSON.stringify(merged) !== JSON.stringify(cloud);
 
