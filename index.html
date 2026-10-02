@@ -2211,12 +2211,21 @@
                         if (!(h.monthKey in historyMap) || h.km > historyMap[h.monthKey]) historyMap[h.monthKey] = h.km;
                     });
 
-                    return {
+                    // העוגן שייך לחודש הפתוח, לא למי שניצח ב-current: אם המנצח לא מכיר אותו
+                    // והצד השני מכיר ואותו חודש פתוח - לוקחים אותו משם (אחרת הוא נמחק בכל סנכרון)
+                    const other = base === local ? cloud : local;
+                    let monthStartKm = base.monthStartKm != null ? base.monthStartKm : null;
+                    if (monthStartKm == null && other.monthStartKm != null && other.openMonthKey === base.openMonthKey) {
+                        monthStartKm = other.monthStartKm;
+                    }
+
+                    const result = {
                         current: base.current,
                         openMonthKey: base.openMonthKey,
-                        monthStartKm: base.monthStartKm != null ? base.monthStartKm : null,
                         history: Object.keys(historyMap).map(k => ({ monthKey: k, km: historyMap[k] }))
                     };
+                    if (monthStartKm != null) result.monthStartKm = monthStartKm;
+                    return result;
                 }
 
                 function mergeAndApply(cloudValues) {
