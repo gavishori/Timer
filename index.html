@@ -1907,16 +1907,6 @@
                 listEl.innerHTML = rows + `<div class="km-history-row km-history-total"><span>סה"כ</span><span>${fmt(total)} ק"מ</span></div>`;
             }
 
-            // הק"מ שהיה במונה לפני תחילת חודש נתון = הבסיס השנתי + סכום כל החודשים
-            // הקודמים שכבר "נסגרו" בהיסטוריה. ככה נסועת החודש הנוכחי (שעדיין פתוח)
-            // תמיד מחושבת נכון גם אם הוזנה הערה רטרואקטיבית לחודש קודם (כמו אוגוסט).
-            function kmBeforeMonth(state, monthKey, baseline) {
-                const priorKm = (state.history || [])
-                    .filter(h => compareMonthKeys(h.monthKey, monthKey) < 0)
-                    .reduce((sum, h) => sum + h.km, 0);
-                return baseline + priorKm;
-            }
-
             // ---- גרף עמודות: כמה נסע כל רכב בכל חודש (מבוסס רק על נתונים ששמורים בפועל) ----
             const CAR_COLORS = { gray: '#b0bec5', white: '#eceff1', lip: '#ffd166' };
             const CAR_ORDER = ['gray', 'white', 'lip'];
@@ -1927,7 +1917,7 @@
                 const series = {};
                 (state.history || []).forEach(h => { series[h.monthKey] = h.km; });
                 if (state.openMonthKey != null && state.current != null) {
-                    const monthStart = state.monthStartKm != null ? state.monthStartKm : kmBeforeMonth(state, state.openMonthKey, BASELINES[car] || 0);
+                    const monthStart = state.monthStartKm != null ? state.monthStartKm : state.current;
                     series[state.openMonthKey] = state.current - monthStart;
                 }
                 return series;
@@ -2004,7 +1994,7 @@
                 // הראשונה שבה בפועל נפתח החודש הנוכחי (monthStartKm) - לא חישוב נגזר
                 // מההיסטוריה, כדי שמיד אחרי הבדיקה הראשונה של החודש זה יראה 0 בדיוק
                 if (hasCurrent && state.openMonthKey != null) {
-                    const monthStart = state.monthStartKm != null ? state.monthStartKm : kmBeforeMonth(state, state.openMonthKey, baseline);
+                    const monthStart = state.monthStartKm != null ? state.monthStartKm : current;
                     const kmThisMonth = current - monthStart;
                     lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
                 } else {
@@ -2082,8 +2072,10 @@
                     if (state.openMonthKey !== monthKey) {
                         // הבדיקה הראשונה החודש - סוגרים את החודש הקודם (אם היה) ונועלים את הערך הזה כרשמי
                         if (state.openMonthKey != null && state.current != null) {
-                            const prevMonthStart = state.monthStartKm != null ? state.monthStartKm : kmBeforeMonth(state, state.openMonthKey, BASELINES[car] || 0);
-                            const completedKm = state.current - prevMonthStart;
+                            // הערך השמור הוא ההזנה הראשונה של החודש שנסגר, וההזנה הראשונה של
+                            // החודש החדש היא נקודת הסיום שלו - ההפרש הוא מה שנסעו באותו חודש
+                            const prevMonthStart = state.monthStartKm != null ? state.monthStartKm : state.current;
+                            const completedKm = parsed - prevMonthStart;
                             const idx = state.history.findIndex(h => h.monthKey === state.openMonthKey);
                             if (idx >= 0) state.history[idx].km = completedKm;
                             else state.history.push({ monthKey: state.openMonthKey, km: completedKm });
@@ -2096,7 +2088,7 @@
                         saveValues(values);
                         computeAndRender(row, isLeasing, state);
                     } else {
-                        const previewState = Object.assign({}, state, { current: parsed });
+                        const previewState = Object.assign({}, state, { current: parsed, monthStartKm: state.monthStartKm != null ? state.monthStartKm : state.current });
                         computeAndRender(row, isLeasing, previewState);
                     }
 
