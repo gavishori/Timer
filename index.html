@@ -1836,14 +1836,11 @@
             const tracker = document.getElementById('kmTracker');
             if (!tracker) return;
 
-            // תחילת שנת הליסינג וגבולות המכסה - זהים לשני רכבי הליסינג
-            const LEASE_YEAR_START = new Date(2026, 7, 25); // 25.08.2026
-            const LEASE_YEAR_END = new Date(2027, 7, 25);
+            // תחילת שנת הליסינג לכל רכב (המכסה: 25,000 ק"מ לשנה מהתאריך הזה)
+            const LEASE_STARTS = { gray: new Date(2026, 7, 25), white: new Date(2026, 8, 1) }; // אפור 25.08.2026, לבן 01.09.2026
             const ANNUAL_QUOTA = 25000;
-            // ק"מ שהיה במונה בתחילת שנת הליסינג - שונה לכל רכב
-            // ליפ: לא עוקבים אחריו מול מכסה שנתית, אבל בסיס 63,500 (המונה ב-1.09.2026)
-            // עדיין דרוש כדי שחישוב "נסעת החודש" של ספטמבר/אוקטובר יהיה נכון
-            const BASELINES = { gray: 18824, white: 86106, lip: 63500 };
+            // ק"מ שהיה במונה בתחילת שנת הליסינג של כל רכב (ליפ: הקריאה הראשונה של ספטמבר)
+            const BASELINES = { gray: 18824, white: 86106, lip: 63470 };
 
             const STORAGE_KEY = 'km-tracker-values';
             const cars = ['gray', 'white', 'lip'];
@@ -2016,8 +2013,10 @@
                 if (isLeasing) {
                     if (hasCurrent) {
                         const now = new Date();
-                        const totalDays = Math.round((LEASE_YEAR_END - LEASE_YEAR_START) / 86400000);
-                        const daysElapsed = Math.max(0, Math.min(totalDays, Math.floor((now - LEASE_YEAR_START) / 86400000)));
+                        const leaseStart = LEASE_STARTS[car];
+                        const leaseEnd = new Date(leaseStart.getFullYear() + 1, leaseStart.getMonth(), leaseStart.getDate());
+                        const totalDays = Math.round((leaseEnd - leaseStart) / 86400000);
+                        const daysElapsed = Math.max(0, Math.min(totalDays, Math.floor((now - leaseStart) / 86400000)));
                         const daysRemaining = Math.max(0, totalDays - daysElapsed);
 
                         const kmThisYear = current - baseline;
@@ -2096,27 +2095,23 @@
                     return state;
                 }
 
-                // נתונים ידועים מראש לחודשים שלא נמדדו דרך האפליקציה - מוזנים פעם אחת אוטומטית,
-                // בלי טופס ידני. לא דורסים עריכה/עדכון עתידי של המשתמש לחודש הזה.
-                const SEED_HISTORY = {
-                    gray: [{ monthKey: '2026-7', km: 960 }],   // אוגוסט 2026
-                    white: [{ monthKey: '2026-7', km: 630 }],  // אוגוסט 2026
-                    lip: [{ monthKey: '2026-10', km: 1500 }]   // נובמבר 2026
+                // תיקון חד-פעמי של ההיסטוריה החודשית (גרסה 2), לפי הקריאות הראשונות של כל חודש.
+                // נשמר מקומית בלבד; הסנכרון מעביר אותו הלאה (גרסה גבוהה יותר גוברת על ההיסטוריה בלבד,
+                // ולעולם לא נוגעת בקריאה הנוכחית).
+                const HISTORY_REV = 2;
+                const CORRECT_HISTORY = {
+                    gray: [{ monthKey: '2026-7', km: 739 }, { monthKey: '2026-8', km: 2927 }], // אוג' 19,563-18,824 | ספט' 22,490-19,563
+                    white: [{ monthKey: '2026-8', km: 891 }],                                 // ספט' 86,997-86,106
+                    lip: [{ monthKey: '2026-8', km: 1500 }]                                   // ספט' 64,970-63,470
                 };
-                if (car in SEED_HISTORY) {
-                    const seedValues = loadValues();
-                    const seedState = seedValues[car] || { current: null, openMonthKey: null, history: [] };
-                    if (!seedState.history) seedState.history = [];
-                    let seeded = false;
-                    SEED_HISTORY[car].forEach(entry => {
-                        if (!seedState.history.some(h => h.monthKey === entry.monthKey)) {
-                            seedState.history.push(entry);
-                            seeded = true;
-                        }
-                    });
-                    if (seeded) {
-                        seedValues[car] = seedState;
-                        saveValues(seedValues);
+                if (car in CORRECT_HISTORY) {
+                    const migValues = loadValues();
+                    const migState = migValues[car] || { current: null, openMonthKey: null, history: [] };
+                    if ((migState.rev || 0) < HISTORY_REV) {
+                        migState.history = CORRECT_HISTORY[car].map(h => Object.assign({}, h));
+                        migState.rev = HISTORY_REV;
+                        migValues[car] = migState;
+                        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(migValues)); } catch (e) {}
                     }
                 }
 
@@ -2197,11 +2192,19 @@
 
                     // היסטוריה: תמיד איחוד לפי חודש (איחוד מלא, לא תלוי מי "ניצח" למעלה),
                     // לוקחים את הערך הגבוה יותר לכל חודש
+                    // חריג: אם לצדדים גרסת היסטוריה שונה, הגרסה הגבוהה גוברת במלואה (כך אפשר גם
+                    // למחוק/להקטין רשומה שגויה, מה שאיחוד-לפי-מקסימום לא יכול)
+                    const localRev = local.rev || 0;
+                    const cloudRev = cloud.rev || 0;
                     const historyMap = {};
-                    (cloud.history || []).forEach(h => { historyMap[h.monthKey] = h.km; });
-                    (local.history || []).forEach(h => {
-                        if (!(h.monthKey in historyMap) || h.km > historyMap[h.monthKey]) historyMap[h.monthKey] = h.km;
-                    });
+                    if (localRev !== cloudRev) {
+                        ((localRev > cloudRev ? local.history : cloud.history) || []).forEach(h => { historyMap[h.monthKey] = h.km; });
+                    } else {
+                        (cloud.history || []).forEach(h => { historyMap[h.monthKey] = h.km; });
+                        (local.history || []).forEach(h => {
+                            if (!(h.monthKey in historyMap) || h.km > historyMap[h.monthKey]) historyMap[h.monthKey] = h.km;
+                        });
+                    }
 
                     // העוגן שייך לחודש הפתוח, לא למי שניצח ב-current: אם המנצח לא מכיר אותו
                     // והצד השני מכיר ואותו חודש פתוח - לוקחים אותו משם (אחרת הוא נמחק בכל סנכרון)
@@ -2217,6 +2220,7 @@
                         history: Object.keys(historyMap).map(k => ({ monthKey: k, km: historyMap[k] }))
                     };
                     if (monthStartKm != null) result.monthStartKm = monthStartKm;
+                    if (Math.max(localRev, cloudRev) > 0) result.rev = Math.max(localRev, cloudRev);
                     return result;
                 }
 
