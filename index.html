@@ -493,15 +493,37 @@
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 14px;
-            padding: 14px;
+            padding: 10px 14px;
             margin-top: 10px;
         }
 
-        .yield-calc h3 {
-            margin: 0 0 12px 0;
+        .yield-header {
+            margin: 0;
             font-size: 0.85rem;
             color: #cfe0ff;
             text-align: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .yield-header .col-arrow {
+            display: inline-block;
+            font-size: 0.7rem;
+            margin-left: 2px;
+        }
+
+        .yield-header:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .yield-body {
+            margin-top: 12px;
+        }
+
+        .yield-calc.collapsed .yield-body {
+            display: none;
         }
 
         .yield-field {
@@ -1169,8 +1191,11 @@
                 </div>
             </div>
 
-            <div class="yield-calc">
-                <h3>💰 מחשבון תשואה</h3>
+            <div class="yield-calc collapsed" id="yieldCalc">
+                <h3 class="yield-header" role="button" tabindex="0" aria-expanded="false">
+                    <span><span class="col-arrow">▸</span> 💰 מחשבון תשואה</span>
+                </h3>
+                <div class="yield-body">
                 <div class="yield-field">
                     <label for="yieldPrice">מחיר קניית דירה</label>
                     <div class="yield-input-wrap">
@@ -1189,6 +1214,7 @@
                     <span class="yield-label">תשואה שנתית</span>
                     <span class="yield-value" id="yieldResult">—</span>
                     <div class="yield-formula" id="yieldFormula"></div>
+                </div>
                 </div>
             </div>
         </div>
@@ -2283,6 +2309,24 @@
             const resultEl = document.getElementById('yieldResult');
             const formulaEl = document.getElementById('yieldFormula');
             if (!priceInput || !rentInput || !resultEl) return;
+
+            // פתיחה/סגירה בלחיצה על הכותרת (סגור כברירת מחדל, כמו מעקב הקילומטראז')
+            const yieldBox = document.getElementById('yieldCalc');
+            const yieldHeader = yieldBox.querySelector('.yield-header');
+            const yieldArrow = yieldHeader.querySelector('.col-arrow');
+            const toggleYield = () => {
+                const willOpen = yieldBox.classList.contains('collapsed');
+                yieldBox.classList.toggle('collapsed', !willOpen);
+                yieldHeader.setAttribute('aria-expanded', String(willOpen));
+                yieldArrow.textContent = willOpen ? '▾' : '▸';
+            };
+            yieldHeader.addEventListener('click', toggleYield);
+            yieldHeader.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleYield();
+                }
+            });
 
             const STORAGE_KEY = 'yield-calc-values';
 
