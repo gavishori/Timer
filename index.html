@@ -402,6 +402,26 @@
             font-size: 0.72rem;
             color: #e3ebfb;
             line-height: 1.6;
+            direction: rtl;
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .km-stats-text {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .km-donut {
+            flex: 0 0 auto;
+            display: block;
+        }
+
+        .km-donut text {
+            fill: #ffffff;
+            text-anchor: middle;
         }
 
         .km-stats .km-warning {
@@ -2012,6 +2032,7 @@
                 const hasCurrent = current != null && !isNaN(current);
 
                 const lines = [];
+                let donutHtml = '';
 
                 // "נסעת החודש" - תמיד מוצג: ההזנה הנוכחית (גם אם זו רק הצצה) פחות ההזנה
                 // הראשונה שבה בפועל נפתח החודש הנוכחי (monthStartKm) - לא חישוב נגזר
@@ -2049,6 +2070,20 @@
                         const kmRemaining = ANNUAL_QUOTA - kmThisYear;
                         const pct = (kmThisYear / ANNUAL_QUOTA) * 100;
 
+                        // עיגול: אדום = מה שנסעו מתוך המכסה השנתית, ירוק = מה שנשאר; המספר בפנים = ק"מ שנותרו
+                        const radius = 29;
+                        const circ = 2 * Math.PI * radius;
+                        const usedFrac = Math.max(0, Math.min(1, kmThisYear / ANNUAL_QUOTA));
+                        const over = kmRemaining < 0;
+                        const centerNum = over ? fmt(-kmRemaining) : fmt(kmRemaining);
+                        const centerLabel = over ? 'חריגה' : 'נותרו';
+                        donutHtml = `<svg class="km-donut" width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${centerLabel} ${centerNum} ק&quot;מ מהמכסה השנתית">` +
+                            `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#4caf50" stroke-width="9"/>` +
+                            `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#e53935" stroke-width="9" stroke-dasharray="${(usedFrac * circ).toFixed(2)} ${circ.toFixed(2)}" transform="rotate(-90 38 38)"/>` +
+                            `<text x="38" y="38" font-size="13" font-weight="700">${centerNum}</text>` +
+                            `<text x="38" y="50" font-size="8">${centerLabel}</text>` +
+                            `</svg>`;
+
                         if (daysRemaining > 0) {
                             const dailyAllowance = kmRemaining / daysRemaining;
                             if (dailyAllowance < 0) {
@@ -2070,7 +2105,7 @@
 
                 if (isLeasing) renderHistory(row, state);
 
-                statsEl.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+                statsEl.innerHTML = `<div class="km-stats-text">${lines.map(l => `<div>${l}</div>`).join('')}</div>${donutHtml}`;
             }
 
             tracker.querySelectorAll('.km-row').forEach(row => {
