@@ -2078,8 +2078,8 @@
                         const centerNum = over ? fmt(-kmRemaining) : fmt(kmRemaining);
                         const centerLabel = over ? 'חריגה' : 'נותרו';
                         donutHtml = `<svg class="km-donut" width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${centerLabel} ${centerNum} ק&quot;מ מהמכסה השנתית">` +
-                            `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#4caf50" stroke-width="9"/>` +
-                            `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#e53935" stroke-width="9" stroke-dasharray="${(usedFrac * circ).toFixed(2)} ${circ.toFixed(2)}" transform="rotate(-90 38 38)"/>` +
+                            `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#4caf50" stroke-width="4.5"/>` +
+                            `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#e53935" stroke-width="4.5" stroke-dasharray="${(usedFrac * circ).toFixed(2)} ${circ.toFixed(2)}" transform="rotate(-90 38 38)"/>` +
                             `<text x="38" y="38" font-size="13" font-weight="700">${centerNum}</text>` +
                             `<text x="38" y="50" font-size="8">${centerLabel}</text>` +
                             `</svg>`;
