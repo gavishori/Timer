@@ -99,7 +99,24 @@
             color: #9fb4dd;
         }
 
-        .timeline-header {
+        /* לוח השנה בקוביה נפתחת/נסגרת, כמו מעקב הקילומטראז' ומחשבון התשואה */
+        .cal-box {
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+            padding: 10px 14px;
+            margin-top: 10px;
+        }
+
+        .cal-box:not(.collapsed) {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cal-header {
             flex-shrink: 0;
             display: flex;
             align-items: center;
@@ -108,10 +125,31 @@
             font-size: 0.85rem;
             font-weight: 600;
             color: #cfe0ff;
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            padding-top: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cal-header .col-arrow {
+            display: inline-block;
+            font-size: 0.7rem;
+        }
+
+        .cal-header:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 4px;
+            border-radius: 8px;
+        }
+
+        .cal-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
             margin-top: 8px;
-            margin-bottom: 4px;
+        }
+
+        .cal-box.collapsed .cal-body {
+            display: none;
         }
 
         .tl-refresh-btn {
@@ -940,6 +978,10 @@
             }
 
             /* הלוח-שנה זורם עם שאר הדף במקום לגלול בתוך תיבה פנימית קטנה */
+            .cal-box:not(.collapsed) {
+                flex: 0 0 auto;
+            }
+
             .timeline-wrap {
                 flex: 0 0 auto;
                 min-height: 0;
@@ -1141,13 +1183,17 @@
                 <button type="button" id="exportPdfBtn" class="export-btn">📄 ייצוא סיכום PDF</button>
             </div>
 
-            <div class="timeline-header">
-                <span>📅 לוח שנה - שכבה י׳ תשפ״ז</span>
-                <button type="button" id="timelineRefreshBtn" class="tl-refresh-btn" title="רענן מהגיליון החי">🔄</button>
+            <div class="cal-box collapsed" id="calBox">
+                <div class="cal-header" role="button" tabindex="0" aria-expanded="false">
+                    <span><span class="col-arrow">▸</span> 📅 לוח שנה - שכבה י׳ תשפ״ז</span>
+                    <button type="button" id="timelineRefreshBtn" class="tl-refresh-btn" title="רענן מהגיליון החי">🔄</button>
+                </div>
+                <div class="cal-body">
+                    <div class="tl-sync-status" id="timelineSyncStatus"></div>
+                    <select class="month-select" id="monthSelect"></select>
+                    <div class="timeline-wrap" id="timelineWrap"></div>
+                </div>
             </div>
-            <div class="tl-sync-status" id="timelineSyncStatus"></div>
-            <select class="month-select" id="monthSelect"></select>
-            <div class="timeline-wrap" id="timelineWrap"></div>
 
             <div class="km-tracker collapsed" id="kmTracker">
                 <h3 class="km-header" role="button" tabindex="0" aria-expanded="false">
@@ -1874,6 +1920,31 @@
         }
 
         document.getElementById('monthSelect').addEventListener('change', renderSelectedMonth);
+
+        // פתיחה/סגירה של לוח השנה בלחיצה על הכותרת (סגור כברירת מחדל); כפתור הרענון לא מחליף מצב
+        (function initCalendarToggle() {
+            const box = document.getElementById('calBox');
+            if (!box) return;
+            const header = box.querySelector('.cal-header');
+            const arrow = header.querySelector('.col-arrow');
+            const toggle = () => {
+                const willOpen = box.classList.contains('collapsed');
+                box.classList.toggle('collapsed', !willOpen);
+                header.setAttribute('aria-expanded', String(willOpen));
+                arrow.textContent = willOpen ? '▾' : '▸';
+            };
+            header.addEventListener('click', (e) => {
+                if (e.target.closest('.tl-refresh-btn')) return;
+                toggle();
+            });
+            header.addEventListener('keydown', (e) => {
+                if (e.target !== header) return;
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle();
+                }
+            });
+        })();
 
         buildTimeline();
 
