@@ -2106,6 +2106,7 @@
 
                 const lines = [];
                 let donutHtml = '';
+                let kmThisMonthVal = null;
 
                 // "נסעת החודש" - תמיד מוצג: ההזנה הנוכחית (גם אם זו רק הצצה) פחות ההזנה
                 // הראשונה שבה בפועל נפתח החודש הנוכחי (monthStartKm) - לא חישוב נגזר
@@ -2113,6 +2114,7 @@
                 if (hasCurrent && state.openMonthKey != null) {
                     const monthStart = state.monthStartKm != null ? state.monthStartKm : current;
                     const kmThisMonth = current - monthStart;
+                    kmThisMonthVal = kmThisMonth;
                     lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
                 } else {
                     lines.push('נסעת החודש: — (הזינו ק"מ נוכחי)');
@@ -2128,6 +2130,18 @@
                 if (lastClosed) {
                     const monthName = HEBREW_MONTHS[Number(lastClosed.monthKey.split('-')[1])];
                     lines.push(`בחודש ${monthName} נסעת <strong>${fmt(lastClosed.km)}</strong> ק"מ`);
+                }
+
+                // מכסה חודשית ממוצעת (המכסה השנתית חלקי 12) וכמה נותר ממנה בחודש הנוכחי
+                if (isLeasing && kmThisMonthVal != null) {
+                    const monthlyAllowance = ANNUAL_QUOTA / 12;
+                    const monthLeft = monthlyAllowance - kmThisMonthVal;
+                    lines.push(`מותר לנסוע בחודש: <strong>${fmt(Math.round(monthlyAllowance))}</strong> ק"מ`);
+                    if (monthLeft < 0) {
+                        lines.push(`<span class="km-warning">⚠️ חרגת החודש ב-${fmt(Math.round(-monthLeft))} ק"מ</span>`);
+                    } else {
+                        lines.push(`נותר לחודש הנוכחי: <strong>${fmt(Math.round(monthLeft))}</strong> ק"מ`);
+                    }
                 }
 
                 if (isLeasing) {
