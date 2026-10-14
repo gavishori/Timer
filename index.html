@@ -664,6 +664,68 @@
             direction: ltr;
         }
 
+        /* ---- מחשבון השקעה (שותפות) ---- */
+        .invest-group-title {
+            margin: 12px 0 8px 0;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #ffd166;
+        }
+
+        .invest-results {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .invest-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+        }
+
+        .invest-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .invest-row .invest-label {
+            font-size: 0.7rem;
+            color: #cfe0ff;
+            line-height: 1.3;
+            flex: 1 1 auto;
+        }
+
+        .invest-row .invest-value {
+            direction: ltr;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #8bc34a;
+            flex: 0 0 auto;
+            line-height: 1.3;
+        }
+
+        .invest-row .invest-value small {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 400;
+            color: #cfe0ff;
+        }
+
+        .invest-row .invest-value.negative {
+            color: #ff6b6b;
+        }
+
+        .invest-note {
+            margin-top: 8px;
+            font-size: 0.62rem;
+            color: #9fb4dd;
+            line-height: 1.4;
+        }
+
         .countdown-label {
             font-size: 0.75rem;
             font-weight: 600;
@@ -1283,6 +1345,81 @@
                     <span class="yield-value" id="yieldResult">—</span>
                     <div class="yield-formula" id="yieldFormula"></div>
                 </div>
+                </div>
+            </div>
+
+            <div class="yield-calc collapsed" id="investCalc">
+                <h3 class="yield-header" role="button" tabindex="0" aria-expanded="false">
+                    <span><span class="col-arrow">▸</span> 🏗️ מחשבון השקעה</span>
+                </h3>
+                <div class="yield-body">
+                <div class="invest-group-title">עלויות הפרויקט (בדולר)</div>
+                <div class="yield-field">
+                    <label for="investBuild">עלות הבנייה</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investBuild" placeholder="250000" min="0" step="1000">
+                        <span class="currency">$</span>
+                    </div>
+                </div>
+                <div class="yield-field">
+                    <label for="investLand">קרקע</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investLand" placeholder="30000" min="0" step="1000">
+                        <span class="currency">$</span>
+                    </div>
+                </div>
+                <div class="yield-field">
+                    <label for="investFreddy">פרדי</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investFreddy" placeholder="11000" min="0" step="100">
+                        <span class="currency">$</span>
+                    </div>
+                </div>
+                <div class="yield-field">
+                    <label for="investLawyer">עו"ד אורי בר</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investLawyer" placeholder="2000" min="0" step="100">
+                        <span class="currency">$</span>
+                    </div>
+                </div>
+                <div class="yield-field">
+                    <label for="investSign">תשלום לדורי (חתימה)</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investSign" placeholder="125" min="0" step="25">
+                        <span class="currency">$</span>
+                    </div>
+                </div>
+                <div class="invest-group-title">הנחות לחישוב</div>
+                <div class="yield-field">
+                    <label for="investRate">שער הדולר</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investRate" placeholder="3.67" min="0" step="0.01">
+                        <span class="currency">₪</span>
+                    </div>
+                </div>
+                <div class="yield-field">
+                    <label for="investProfitPct">אחוז רווח נדרש</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investProfitPct" placeholder="20" min="0" step="1">
+                        <span class="currency">%</span>
+                    </div>
+                </div>
+                <div class="yield-field">
+                    <label for="investSale">מחיר מכירה</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investSale" placeholder="350000" min="0" step="1000">
+                        <span class="currency">$</span>
+                    </div>
+                </div>
+                <div class="yield-field">
+                    <label for="investFee">ניכוי במכירה</label>
+                    <div class="yield-input-wrap">
+                        <input type="number" id="investFee" placeholder="10" min="0" step="1">
+                        <span class="currency">%</span>
+                    </div>
+                </div>
+                <div class="invest-results" id="investResults"></div>
+                <div class="invest-note">הרווח = מחיר המכירה אחרי הניכוי פחות ההשקעה הכספית; אחוז הרווח הוא הרווח ביחס להשקעה.</div>
                 </div>
             </div>
         </div>
@@ -2594,6 +2731,187 @@
 
                 es.addEventListener('patch', () => {
                     fetch(firebaseUrl('yield-calc'))
+                        .then(r => r.json())
+                        .then(cloudValues => mergeAndApply(cloudValues || {}))
+                        .catch(() => {});
+                });
+            })();
+        })();
+
+        // ---- מחשבון השקעה (שותפות) - חישוב לפי עלויות הפרויקט, שער דולר, אחוז רווח נדרש ומחיר מכירה ----
+        (function initInvestCalculator() {
+            const box = document.getElementById('investCalc');
+            const resultsEl = document.getElementById('investResults');
+            if (!box || !resultsEl) return;
+
+            const FIELDS = [
+                ['investBuild', 250000], ['investLand', 30000], ['investFreddy', 11000],
+                ['investLawyer', 2000], ['investSign', 125], ['investRate', 3.67],
+                ['investProfitPct', 20], ['investSale', 350000], ['investFee', 10]
+            ];
+            const STORAGE_KEY = 'invest-calc-values';
+            const inputs = {};
+            FIELDS.forEach(([id]) => { inputs[id] = document.getElementById(id); });
+
+            const header = box.querySelector('.yield-header');
+            const arrow = header.querySelector('.col-arrow');
+            const toggle = () => {
+                const willOpen = box.classList.contains('collapsed');
+                box.classList.toggle('collapsed', !willOpen);
+                header.setAttribute('aria-expanded', String(willOpen));
+                arrow.textContent = willOpen ? '▾' : '▸';
+            };
+            header.addEventListener('click', toggle);
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle();
+                }
+            });
+
+            const num = (id) => {
+                const v = parseFloat(inputs[id].value);
+                return isNaN(v) ? 0 : v;
+            };
+            const usd = (n) => (n < 0 ? '-$' : '$') + Math.abs(Math.round(n)).toLocaleString('en-US');
+            const nis = (n) => (n < 0 ? '-₪' : '₪') + Math.abs(Math.round(n)).toLocaleString('en-US');
+
+            function row(label, mainValue, subValue, negative) {
+                return `<div class="invest-row"><span class="invest-label">${label}</span>` +
+                    `<span class="invest-value${negative ? ' negative' : ''}">${mainValue}${subValue ? `<small>${subValue}</small>` : ''}</span></div>`;
+            }
+
+            function calculate() {
+                const invested = num('investBuild') + num('investLand') + num('investFreddy') + num('investLawyer') + num('investSign');
+                const rate = num('investRate');
+                const required = num('investProfitPct') / 100;
+                const sale = num('investSale');
+                const fee = num('investFee') / 100;
+
+                if (invested <= 0 || fee >= 1) {
+                    resultsEl.innerHTML = '<div class="invest-note">הזינו עלויות כדי לראות חישוב</div>';
+                    return;
+                }
+
+                const afterFee = 1 - fee;
+                const nisOf = (usdAmount) => (rate > 0 ? nis(usdAmount * rate) : '');
+
+                const requiredSale = invested * (1 + required) / afterFee;
+                const profitAtRequired = invested * required;
+
+                const profitAtSale = afterFee * sale - invested;
+                const profitPctAtSale = (profitAtSale / invested) * 100;
+
+                const maxInvest = afterFee * sale / (1 + required);
+                const profitAtMax = maxInvest * required;
+
+                const pctText = (required * 100).toFixed(0);
+                resultsEl.innerHTML =
+                    row('השקעה כספית (סך העלויות)', usd(invested), nisOf(invested)) +
+                    row(`מחיר מכירה נדרש לרווח של ${pctText}%`, usd(requiredSale), `רווח ${usd(profitAtRequired)} · ${nisOf(profitAtRequired)}`) +
+                    row(`רווח במחיר מכירה ${usd(sale)}`, usd(profitAtSale), `${profitPctAtSale.toFixed(2)}% · ${nisOf(profitAtSale)}`, profitAtSale < 0) +
+                    row(`השקעה מקסימלית למכירה ב-${usd(sale)} ורווח ${pctText}%`, usd(maxInvest), `רווח ${usd(profitAtMax)} · ${nisOf(profitAtMax)}`);
+            }
+
+            function loadSaved() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            function currentValues() {
+                const values = {};
+                FIELDS.forEach(([id]) => { values[id] = inputs[id].value; });
+                return values;
+            }
+
+            function save() {
+                const values = Object.assign(currentValues(), { updatedAt: Date.now() });
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+                } catch (e) {}
+                fetch(firebaseUrl('invest-calc'), {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(values)
+                }).catch(err => console.error('סנכרון מחשבון ההשקעה לענן נכשל (נשמר מקומית בלבד):', err));
+            }
+
+            FIELDS.forEach(([id, def]) => { inputs[id].value = String(def); });
+            const saved = loadSaved();
+            if (saved) {
+                FIELDS.forEach(([id]) => {
+                    if (saved[id] != null && saved[id] !== '') inputs[id].value = saved[id];
+                });
+            }
+
+            FIELDS.forEach(([id]) => {
+                inputs[id].addEventListener('input', () => {
+                    calculate();
+                    save();
+                });
+            });
+
+            calculate();
+
+            // סנכרון חי בין מכשירים - אותה שיטה כמו במחשבון התשואה: מי שנערך לאחרונה מנצח כמקשה אחת
+            (function connectInvestSync() {
+                let es;
+                try {
+                    es = new EventSource(firebaseUrl('invest-calc'));
+                } catch (e) {
+                    return;
+                }
+
+                const isEmpty = (v) => v == null || v === '';
+                const pick = (localVal, cloudVal) => (!isEmpty(cloudVal) ? cloudVal : localVal);
+
+                function mergeAndApply(cloudValues) {
+                    const local = loadSaved() || {};
+                    const cloud = cloudValues || {};
+                    const localTime = local.updatedAt || 0;
+                    const cloudTime = cloud.updatedAt || 0;
+
+                    const merged = {};
+                    FIELDS.forEach(([id]) => {
+                        if (localTime > cloudTime) merged[id] = !isEmpty(local[id]) ? local[id] : cloud[id];
+                        else merged[id] = pick(local[id], cloud[id]);
+                    });
+                    merged.updatedAt = Math.max(localTime, cloudTime);
+
+                    if (!FIELDS.some(([id]) => !isEmpty(merged[id]))) return;
+
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                    } catch (e) {}
+
+                    FIELDS.forEach(([id]) => {
+                        if (!isEmpty(merged[id])) inputs[id].value = merged[id];
+                    });
+                    calculate();
+
+                    if (JSON.stringify(merged) !== JSON.stringify(cloud)) {
+                        fetch(firebaseUrl('invest-calc'), {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(merged)
+                        }).catch(() => {});
+                    }
+                }
+
+                es.addEventListener('put', (e) => {
+                    try {
+                        const parsed = JSON.parse(e.data);
+                        mergeAndApply(parsed.data || {});
+                    } catch (err) {
+                        console.error('שגיאה בפענוח סנכרון מחשבון השקעה:', err);
+                    }
+                });
+
+                es.addEventListener('patch', () => {
+                    fetch(firebaseUrl('invest-calc'))
                         .then(r => r.json())
                         .then(cloudValues => mergeAndApply(cloudValues || {}))
                         .catch(() => {});
