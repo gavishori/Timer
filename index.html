@@ -689,6 +689,12 @@
             unicode-bidi: isolate;
         }
 
+        .yield-field input[readonly] {
+            background: rgba(255, 255, 255, 0.6);
+            color: #444;
+            cursor: default;
+        }
+
         .invest-costs-body[hidden] {
             display: none;
         }
@@ -778,11 +784,10 @@
         .task-column {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 20px;
+            border-radius: 14px;
+            padding: 10px 14px;
             flex: 1 1 0;
             min-width: 0;
-            backdrop-filter: blur(6px);
             text-align: right;
             display: flex;
             flex-direction: column;
@@ -790,8 +795,9 @@
         }
 
         .task-column h2 {
-            font-size: 1.2rem;
-            margin: 0 0 14px 0;
+            font-size: 0.85rem;
+            color: #cfe0ff;
+            margin: 0 0 10px 0;
             text-align: center;
             flex-shrink: 0;
             cursor: pointer;
@@ -806,13 +812,13 @@
 
         .task-column h2 .col-arrow {
             display: inline-block;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #cfe0ff;
-            margin-left: 4px;
+            margin-left: 2px;
         }
 
         .task-column h2 .task-count {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 400;
             color: #cfe0ff;
         }
@@ -1379,35 +1385,35 @@
                 <div class="yield-field">
                     <label for="investBuild">עלות הבנייה</label>
                     <div class="yield-input-wrap">
-                        <input type="number" id="investBuild" placeholder="250000" min="0" step="1000">
+                        <input type="number" id="investBuild" readonly tabindex="-1" placeholder="250000" min="0" step="1000">
                         <span class="currency">$</span>
                     </div>
                 </div>
                 <div class="yield-field">
                     <label for="investLand">קרקע</label>
                     <div class="yield-input-wrap">
-                        <input type="number" id="investLand" placeholder="30000" min="0" step="1000">
+                        <input type="number" id="investLand" readonly tabindex="-1" placeholder="30000" min="0" step="1000">
                         <span class="currency">$</span>
                     </div>
                 </div>
                 <div class="yield-field">
                     <label for="investFreddy">פרדי</label>
                     <div class="yield-input-wrap">
-                        <input type="number" id="investFreddy" placeholder="11000" min="0" step="100">
+                        <input type="number" id="investFreddy" readonly tabindex="-1" placeholder="11000" min="0" step="100">
                         <span class="currency">$</span>
                     </div>
                 </div>
                 <div class="yield-field">
                     <label for="investLawyer">עו"ד אורי בר</label>
                     <div class="yield-input-wrap">
-                        <input type="number" id="investLawyer" placeholder="2000" min="0" step="100">
+                        <input type="number" id="investLawyer" readonly tabindex="-1" placeholder="2000" min="0" step="100">
                         <span class="currency">$</span>
                     </div>
                 </div>
                 <div class="yield-field">
                     <label for="investSign">תשלום לדורי (חתימה)</label>
                     <div class="yield-input-wrap">
-                        <input type="number" id="investSign" placeholder="125" min="0" step="25">
+                        <input type="number" id="investSign" readonly tabindex="-1" placeholder="125" min="0" step="25">
                         <span class="currency">$</span>
                     </div>
                 </div>
@@ -2767,13 +2773,20 @@
             const resultsEl = document.getElementById('investResults');
             if (!box || !resultsEl) return;
 
-            const FIELDS = [
+            // עלויות הפרויקט קבועות - לא ניתנות לעריכה ולא מסתנכרנות
+            const FIXED_COSTS = [
                 ['investBuild', 250000], ['investLand', 30000], ['investFreddy', 11000],
-                ['investLawyer', 2000], ['investSign', 125], ['investRate', 3.67],
-                ['investProfitPct', 20], ['investSale', 350000], ['investFee', 10]
+                ['investLawyer', 2000], ['investSign', 125]
+            ];
+            const FIELDS = [
+                ['investRate', 3.67], ['investProfitPct', 20], ['investSale', 350000], ['investFee', 10]
             ];
             const STORAGE_KEY = 'invest-calc-values';
             const inputs = {};
+            FIXED_COSTS.forEach(([id, val]) => {
+                inputs[id] = document.getElementById(id);
+                inputs[id].value = String(val);
+            });
             FIELDS.forEach(([id]) => { inputs[id] = document.getElementById(id); });
 
             const header = box.querySelector('.yield-header');
