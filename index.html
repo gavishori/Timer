@@ -672,6 +672,27 @@
             color: #ffd166;
         }
 
+        .invest-toggle {
+            cursor: pointer;
+            user-select: none;
+            text-align: center;
+        }
+
+        .invest-toggle .col-arrow {
+            display: inline-block;
+            font-size: 0.7rem;
+        }
+
+        .invest-costs-total {
+            color: #8bc34a;
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+
+        .invest-costs-body[hidden] {
+            display: none;
+        }
+
         .invest-results {
             margin-top: 12px;
             padding-top: 10px;
@@ -1353,7 +1374,8 @@
                     <span><span class="col-arrow">▸</span> 🏗️ מחשבון השקעה</span>
                 </h3>
                 <div class="yield-body">
-                <div class="invest-group-title">עלויות הפרויקט (בדולר)</div>
+                <div class="invest-group-title invest-toggle" id="investCostsToggle" role="button" tabindex="0" aria-expanded="false"><span class="col-arrow">▸</span> עלויות הפרויקט (בדולר) <span class="invest-costs-total" id="investCostsTotal"></span></div>
+                <div class="invest-costs-body" id="investCostsBody" hidden>
                 <div class="yield-field">
                     <label for="investBuild">עלות הבנייה</label>
                     <div class="yield-input-wrap">
@@ -1388,6 +1410,7 @@
                         <input type="number" id="investSign" placeholder="125" min="0" step="25">
                         <span class="currency">$</span>
                     </div>
+                </div>
                 </div>
                 <div class="invest-group-title">הנחות לחישוב</div>
                 <div class="yield-field">
@@ -2769,6 +2792,24 @@
                 }
             });
 
+            // רשימת העלויות נפתחת/נסגרת בלחיצה על הכותרת שלה (סגורה כברירת מחדל)
+            const costsToggle = document.getElementById('investCostsToggle');
+            const costsBody = document.getElementById('investCostsBody');
+            const costsArrow = costsToggle.querySelector('.col-arrow');
+            const toggleCosts = () => {
+                const willOpen = costsBody.hidden;
+                costsBody.hidden = !willOpen;
+                costsToggle.setAttribute('aria-expanded', String(willOpen));
+                costsArrow.textContent = willOpen ? '▾' : '▸';
+            };
+            costsToggle.addEventListener('click', toggleCosts);
+            costsToggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleCosts();
+                }
+            });
+
             const num = (id) => {
                 const v = parseFloat(inputs[id].value);
                 return isNaN(v) ? 0 : v;
@@ -2787,6 +2828,8 @@
                 const required = num('investProfitPct') / 100;
                 const sale = num('investSale');
                 const fee = num('investFee') / 100;
+
+                document.getElementById('investCostsTotal').textContent = invested > 0 ? '· ' + usd(invested) : '';
 
                 if (invested <= 0 || fee >= 1) {
                     resultsEl.innerHTML = '<div class="invest-note">הזינו עלויות כדי לראות חישוב</div>';
