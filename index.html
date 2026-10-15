@@ -2206,11 +2206,10 @@
                 const values = loadValues();
                 const state = values[car] || { current: null, openMonthKey: null, history: [] };
                 const series = {};
-                (state.history || []).forEach(h => { series[h.monthKey] = h.km; });
-                if (state.openMonthKey != null && state.current != null) {
-                    const monthStart = state.monthStartKm != null ? state.monthStartKm : state.current;
-                    series[state.openMonthKey] = state.current - monthStart;
-                }
+                // הגרף מציג רק חודשים שהסתיימו - החודש הפתוח (שעוד לא נגמר) לא מופיע בו
+                (state.history || [])
+                    .filter(h => state.openMonthKey == null || compareMonthKeys(h.monthKey, state.openMonthKey) < 0)
+                    .forEach(h => { series[h.monthKey] = h.km; });
                 return series;
             }
 
@@ -3170,7 +3169,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-15-b';
+            const BUILD_ID = '2026-10-15-c';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
