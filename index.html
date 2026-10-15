@@ -1079,6 +1079,13 @@
                 max-height: none;
             }
 
+            /* iOS מבצע זום אוטומטי כשמתמקדים בשדה עם גופן קטן מ-16px - מונעים אותו בלי לחסום זום ידני */
+            input, select, textarea,
+            .km-field input, .yield-field input, .month-select,
+            .task-list li .note-input, .add-task input {
+                font-size: 16px !important;
+            }
+
             /* גם קוביית הקילומטראז' זורמת עם שאר הדף בנייד, בלי הגבלת גובה פנימית */
             .km-tracker:not(.collapsed) .km-body {
                 max-height: none;
@@ -2262,6 +2269,23 @@
                 svgEl.innerHTML = svg;
             }
 
+            // עיגול: אדום = מה שנסעו מתוך היעד, ירוק = מה שנשאר; המספר בפנים = ק"מ שנותרו (או חריגה)
+            function buildDonut(used, target, ariaSuffix) {
+                const radius = 29;
+                const circ = 2 * Math.PI * radius;
+                const remaining = target - used;
+                const usedFrac = Math.max(0, Math.min(1, used / target));
+                const over = remaining < 0;
+                const centerNum = fmt(Math.round(over ? -remaining : remaining));
+                const centerLabel = over ? 'חריגה' : 'נותרו';
+                return `<svg class="km-donut" width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${centerLabel} ${centerNum} ק&quot;מ ${ariaSuffix}">` +
+                    `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#4caf50" stroke-width="4.5"/>` +
+                    `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#e53935" stroke-width="4.5" stroke-dasharray="${(usedFrac * circ).toFixed(2)} ${circ.toFixed(2)}" transform="rotate(-90 38 38)"/>` +
+                    `<text x="38" y="38" font-size="13" font-weight="700">${centerNum}</text>` +
+                    `<text x="38" y="50" font-size="8">${centerLabel}</text>` +
+                    `</svg>`;
+            }
+
             // הקריאה הראשונה שמוזנת בכל חודש (בד"כ ב-1 לחודש) פותחת אותו כ"חודש נוכחי";
             // כשמתחיל חודש חדש, הקודם נסגר ונשמר בהיסטוריה. הנסועה של החודש הפתוח
             // מחושבת תמיד מול הבסיס השנתי + כל מה שכבר נסגר בהיסטוריה (כולל תיקונים ידניים).
@@ -2325,19 +2349,7 @@
                         const kmRemaining = ANNUAL_QUOTA - kmThisYear;
                         const pct = (kmThisYear / ANNUAL_QUOTA) * 100;
 
-                        // עיגול: אדום = מה שנסעו מתוך המכסה השנתית, ירוק = מה שנשאר; המספר בפנים = ק"מ שנותרו
-                        const radius = 29;
-                        const circ = 2 * Math.PI * radius;
-                        const usedFrac = Math.max(0, Math.min(1, kmThisYear / ANNUAL_QUOTA));
-                        const over = kmRemaining < 0;
-                        const centerNum = over ? fmt(-kmRemaining) : fmt(kmRemaining);
-                        const centerLabel = over ? 'חריגה' : 'נותרו';
-                        donutHtml = `<svg class="km-donut" width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${centerLabel} ${centerNum} ק&quot;מ מהמכסה השנתית">` +
-                            `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#4caf50" stroke-width="4.5"/>` +
-                            `<circle cx="38" cy="38" r="${radius}" fill="none" stroke="#e53935" stroke-width="4.5" stroke-dasharray="${(usedFrac * circ).toFixed(2)} ${circ.toFixed(2)}" transform="rotate(-90 38 38)"/>` +
-                            `<text x="38" y="38" font-size="13" font-weight="700">${centerNum}</text>` +
-                            `<text x="38" y="50" font-size="8">${centerLabel}</text>` +
-                            `</svg>`;
+                        donutHtml = buildDonut(kmThisYear, ANNUAL_QUOTA, 'מהמכסה השנתית');
 
                         if (daysRemaining > 0) {
                             const dailyAllowance = kmRemaining / daysRemaining;
@@ -2356,6 +2368,18 @@
                         lines.push('מותר לנסוע ליום: —');
                         lines.push('מצב שנתי: —');
                     }
+                }
+
+                // ליפ אין מכסה שנתית: העיגול משווה את החודש הנוכחי לנסועה של החודש הקודם שנסגר
+                if (!isLeasing && kmThisMonthVal != null && lastClosed && lastClosed.km > 0) {
+                    const monthName = HEBREW_MONTHS[Number(lastClosed.monthKey.split('-')[1])];
+                    const left = lastClosed.km - kmThisMonthVal;
+                    if (left < 0) {
+                        lines.push(`<span class="km-warning">⚠️ עברת את חודש ${monthName} ב-${fmt(Math.round(-left))} ק"מ</span>`);
+                    } else {
+                        lines.push(`נותר עד לרמת חודש ${monthName}: <strong>${fmt(Math.round(left))}</strong> ק"מ`);
+                    }
+                    donutHtml = buildDonut(kmThisMonthVal, lastClosed.km, 'ביחס לחודש הקודם');
                 }
 
                 if (isLeasing) renderHistory(row, state);
