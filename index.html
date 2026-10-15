@@ -2122,10 +2122,12 @@
             if (!tracker) return;
 
             // תחילת שנת הליסינג לכל רכב (המכסה: 25,000 ק"מ לשנה מהתאריך הזה)
-            const LEASE_STARTS = { gray: new Date(2026, 7, 25), white: new Date(2026, 8, 1) }; // אפור 25.08.2026, לבן 01.09.2026
+            const LEASE_STARTS = { gray: new Date(2026, 7, 25), white: new Date(2026, 8, 9) }; // אפור 25.08.2026, לבן 09.09.2026 (תחילת המיצובישי שנספר ללינק)
             const ANNUAL_QUOTA = 25000;
             // ק"מ שהיה במונה בתחילת שנת הליסינג של כל רכב (ליפ: הקריאה הראשונה של ספטמבר)
-            const BASELINES = { gray: 18824, white: 86106, lip: 63470 };
+            // לבן: הלינק מתחילה ב-9,699 (15.10.2026) ואליה נספרים 1,534 ק"מ של המיצובישי (86,106->87,640),
+            // ולכן "מונה בסיס" וירטואלי של 9,699 - 1,534 = 8,165
+            const BASELINES = { gray: 18824, white: 8165, lip: 63470 };
 
             const STORAGE_KEY = 'km-tracker-values';
             const cars = ['gray', 'white', 'lip'];
@@ -2412,11 +2414,11 @@
                 // תיקון חד-פעמי של ההיסטוריה החודשית (גרסה 2), לפי הקריאות הראשונות של כל חודש.
                 // נשמר מקומית בלבד; הסנכרון מעביר אותו הלאה (גרסה גבוהה יותר גוברת על ההיסטוריה בלבד,
                 // ולעולם לא נוגעת בקריאה הנוכחית).
-                const HISTORY_REV = 2;
+                // גרסה 3 - רק הלבן (האפור והליפ לא נוגעים): הלינק הלבנה מתחילה ב-15.10 ב-9,699 ואליה
+                // נספרים ק"מ המיצובישי (ספט' 891 + אוק' 1-15: 87,640-86,997 = 643)
+                const HISTORY_REV = 3;
                 const CORRECT_HISTORY = {
-                    gray: [{ monthKey: '2026-7', km: 739 }, { monthKey: '2026-8', km: 2927 }], // אוג' 19,563-18,824 | ספט' 22,490-19,563
-                    white: [{ monthKey: '2026-8', km: 891 }],                                 // ספט' 86,997-86,106
-                    lip: [{ monthKey: '2026-8', km: 1500 }]                                   // ספט' 64,970-63,470
+                    white: [{ monthKey: '2026-8', km: 891 }]  // ספט' 86,997-86,106
                 };
                 if (car in CORRECT_HISTORY) {
                     const migValues = loadValues();
@@ -2424,6 +2426,13 @@
                     if ((migState.rev || 0) < HISTORY_REV) {
                         migState.history = CORRECT_HISTORY[car].map(h => Object.assign({}, h));
                         migState.rev = HISTORY_REV;
+                        // החלפת המיצובישי בלינק הלבנה: הקריאה הנוכחית היא עדיין של המיצובישי -> מתחילים מ-9,699,
+                        // ועוגן אוקטובר 9,056 גורם לכך ש-643 ק"מ המיצובישי באוקטובר נספרים בחודש
+                        if (car === 'white' && migState.current != null && migState.current > 50000) {
+                            migState.current = 9699;
+                            migState.openMonthKey = '2026-9';
+                            migState.monthStartKm = 9056;
+                        }
                         migValues[car] = migState;
                         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(migValues)); } catch (e) {}
                     }
@@ -2494,8 +2503,13 @@
                     // בוחרים את ה"current"/"openMonthKey" ממי שנראה עדכני יותר - אבל זה
                     // *לא* קובע מה קורה להיסטוריה: היא תמיד מאוחדת בנפרד למטה, כדי שלא
                     // לאבד בטעות חודש סגור רק כי הצד השני לא הכיר current בכלל
+                    const localRev = local.rev || 0;
+                    const cloudRev = cloud.rev || 0;
                     let base;
-                    if (local.current == null) base = cloud;
+                    if (localRev !== cloudRev && (localRev > cloudRev ? local : cloud).current != null) {
+                        // גרסת תיקון גבוהה יותר (למשל החלפת רכב) גוברת גם על הקריאה הנוכחית
+                        base = localRev > cloudRev ? local : cloud;
+                    } else if (local.current == null) base = cloud;
                     else if (cloud.current == null) base = local;
                     else {
                         const cmp = (local.openMonthKey && cloud.openMonthKey)
@@ -2508,8 +2522,6 @@
                     // לוקחים את הערך הגבוה יותר לכל חודש
                     // חריג: אם לצדדים גרסת היסטוריה שונה, הגרסה הגבוהה גוברת במלואה (כך אפשר גם
                     // למחוק/להקטין רשומה שגויה, מה שאיחוד-לפי-מקסימום לא יכול)
-                    const localRev = local.rev || 0;
-                    const cloudRev = cloud.rev || 0;
                     const historyMap = {};
                     if (localRev !== cloudRev) {
                         ((localRev > cloudRev ? local.history : cloud.history) || []).forEach(h => { historyMap[h.monthKey] = h.km; });
@@ -2524,7 +2536,7 @@
                     // והצד השני מכיר ואותו חודש פתוח - לוקחים אותו משם (אחרת הוא נמחק בכל סנכרון)
                     const other = base === local ? cloud : local;
                     let monthStartKm = base.monthStartKm != null ? base.monthStartKm : null;
-                    if (monthStartKm == null && other.monthStartKm != null && other.openMonthKey === base.openMonthKey) {
+                    if (monthStartKm == null && localRev === cloudRev && other.monthStartKm != null && other.openMonthKey === base.openMonthKey) {
                         monthStartKm = other.monthStartKm;
                     }
 
@@ -2547,6 +2559,12 @@
                         const localState = localValues[car];
                         const cloudState = (cloudValues && cloudValues[car]) || null;
                         merged[car] = mergeCarState(localState, cloudState);
+                        // מכשיר שהגיע עם קריאת המיצובישי הישנה (מעל 50,000) לא יחזיר אותה: הלינק הלבנה מתחילה ב-9,699
+                        if (car === 'white' && merged[car].current != null && merged[car].current > 50000) {
+                            merged[car].current = 9699;
+                            merged[car].openMonthKey = '2026-9';
+                            merged[car].monthStartKm = 9056;
+                        }
                         if (JSON.stringify(merged[car]) !== JSON.stringify(cloudState)) changed = true;
                     });
 
