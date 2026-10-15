@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>עוברים לאבן יהודה</title>
     <style>
         * {
@@ -3166,5 +3166,28 @@
         refreshTimelineFromSheet(false);
     </script>
 
+    <script>
+        // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
+        // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
+        (function selfUpdate() {
+            const BUILD_ID = '2026-10-15-b';
+            async function check() {
+                try {
+                    const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
+                    const text = await res.text();
+                    const m = text.match(/const BUILD_ID = '([^']+)'/);
+                    if (!m || m[1] === BUILD_ID) return;
+                    const key = 'build-reload-' + m[1];
+                    if (sessionStorage.getItem(key)) return;
+                    sessionStorage.setItem(key, '1');
+                    location.reload();
+                } catch (e) {}
+            }
+            check();
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') check();
+            });
+        })();
+    </script>
 </body>
 </html>
