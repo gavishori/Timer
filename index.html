@@ -1314,7 +1314,7 @@
                 </h3>
                 <div class="km-body">
                     <div class="km-row" data-car="gray">
-                        <div class="km-row-title">ליסינג אפור</div>
+                        <div class="km-row-title">ליסינג אפור <span class="km-plate">203-63-304</span></div>
                         <div class="km-inputs">
                             <div class="km-field">
                                 <label>ק"מ נוכחי</label>
@@ -3184,7 +3184,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-18-b';
+            const BUILD_ID = '2026-10-18-c';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
