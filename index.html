@@ -437,6 +437,21 @@
             margin: 0;
         }
 
+        .km-plate {
+            display: inline-block;
+            direction: ltr;
+            unicode-bidi: isolate;
+            margin-right: 6px;
+            padding: 1px 7px;
+            border-radius: 5px;
+            background: #ffd166;
+            color: #222;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+        }
+
         .km-stats {
             font-size: 0.72rem;
             color: #e3ebfb;
@@ -1314,7 +1329,7 @@
                     </div>
 
                     <div class="km-row" data-car="white">
-                        <div class="km-row-title">ליסינג לבן</div>
+                        <div class="km-row-title">ליסינג לבן <span class="km-plate">204-21-904</span></div>
                         <div class="km-inputs">
                             <div class="km-field">
                                 <label>ק"מ נוכחי</label>
@@ -3169,7 +3184,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-15-c';
+            const BUILD_ID = '2026-10-18-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
