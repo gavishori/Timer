@@ -2731,6 +2731,14 @@
                     .sort((a, b) => a.at - b.at);
             }
 
+            // הקריאה האחרונה שהוזנה: נקודת הבדיקה האחרונה של החודש, ואם אין - הקריאה הראשונה שנשמרה
+            function latestReading(state) {
+                if (!state) return '';
+                const points = monthCheckpoints(state);
+                if (points.length) return points[points.length - 1].km;
+                return state.current != null ? state.current : '';
+            }
+
             function saveCheckpoints(car, list) {
                 const values = loadValues();
                 values[car] = Object.assign({}, values[car] || {}, { checkpoints: list });
@@ -3019,8 +3027,8 @@
 
                 const stored = loadValues();
                 const saved = stored[car];
-                if (saved && saved.current != null) {
-                    currentInput.value = saved.current;
+                if (saved) {
+                    currentInput.value = latestReading(saved);
                 }
 
                 // בטעינת הדף רק מציגים את המצב השמור. לא פותחים חודש חדש מכאן: אחרת פתיחת הדף
@@ -3030,11 +3038,10 @@
 
                 // שומרים ומחשבים רק בלחיצה מפורשת על "בדוק" (לא תוך כדי הקלדה) - כדי שערך חלקי
                 // באמצע ההקלדה (למשל "2" לפני שמסיימים "20000") לא ייחשב בטעות כקריאת הרכב.
-                // אחרי בדיקה השדה מתרוקן - כדי שלא יישאר בו מספר ישן שנראה כמו "בדיקה קודמת" שכוחה
+                // אחרי בדיקה השדה נשאר עם ההזנה האחרונה, וכך תמיד רואים מה הוזן לאחרונה
                 const checkBtn = row.querySelector('.km-check-btn');
                 const runCheck = () => {
                     applyReading(currentInput.value, true);
-                    currentInput.value = '';
                     updateMonthAlert();
                 };
                 checkBtn.addEventListener('click', runCheck);
@@ -3168,7 +3175,7 @@
                         const rowIsLeasing = rowCar === 'gray' || rowCar === 'white';
                         const state = merged[rowCar];
                         const input = row.querySelector('.km-current');
-                        if (input) input.value = state.current != null ? state.current : '';
+                        if (input && document.activeElement !== input) input.value = latestReading(state);
                         computeAndRender(row, rowIsLeasing, state);
                     });
                     renderKmChart();
@@ -3763,7 +3770,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-23-a';
+            const BUILD_ID = '2026-10-23-b';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
