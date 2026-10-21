@@ -452,6 +452,36 @@
             vertical-align: middle;
         }
 
+        .km-checkpoints {
+            margin-top: 6px;
+            font-size: 0.72rem;
+            color: #e3ebfb;
+            line-height: 1.6;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .km-checkpoints summary {
+            cursor: pointer;
+            color: #cfe0ff;
+        }
+
+        .km-checkpoints .km-cp-latest {
+            color: #ffd166;
+        }
+
+        .km-checkpoints .km-cp-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 1px 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .km-checkpoints .km-cp-row span:last-child {
+            direction: ltr;
+        }
+
         .km-stats {
             font-size: 0.72rem;
             color: #e3ebfb;
@@ -2630,6 +2660,51 @@
                 svgEl.innerHTML = svg;
             }
 
+            // נקודות בדיקה במהלך החודש: נשמרות רק להצגת מצב עדכני - לא נכנסות לשום חישוב
+            function monthCheckpoints(state) {
+                const raw = Array.isArray(state.checkpoints) ? state.checkpoints : Object.values(state.checkpoints || {});
+                return raw
+                    .filter(c => c && c.m === state.openMonthKey && !isNaN(c.km))
+                    .sort((a, b) => a.at - b.at);
+            }
+
+            function saveCheckpoints(car, list) {
+                const values = loadValues();
+                values[car] = Object.assign({}, values[car] || {}, { checkpoints: list });
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(values)); } catch (e) {}
+                // עדכון צר של נקודות הבדיקה בלבד - בלי לדרוס שום שדה אחר של שאר הרכבים
+                fetch(firebaseUrl('km-tracker/' + car), {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ checkpoints: list })
+                }).catch(err => console.error('סנכרון נקודות בדיקה נכשל (נשמר מקומית בלבד):', err));
+            }
+
+            function renderCheckpoints(row, state) {
+                let el = row.querySelector('.km-checkpoints');
+                if (!el) {
+                    el = document.createElement('div');
+                    el.className = 'km-checkpoints';
+                    row.querySelector('.km-stats').insertAdjacentElement('afterend', el);
+                }
+                const list = monthCheckpoints(state);
+                if (!list.length) {
+                    el.innerHTML = '';
+                    return;
+                }
+                const start = state.monthStartKm != null ? state.monthStartKm : state.current;
+                const fmtAt = at => {
+                    const d = new Date(at);
+                    const p2 = n => String(n).padStart(2, '0');
+                    return `${p2(d.getDate())}.${p2(d.getMonth() + 1)} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+                };
+                const latest = list[list.length - 1];
+                const rows = list.slice().reverse().slice(0, 12).map(c =>
+                    `<div class="km-cp-row"><span>${fmtAt(c.at)}</span><span>${fmt(c.km)} ק"מ (${c.km - start >= 0 ? '+' : ''}${fmt(c.km - start)})</span></div>`
+                ).join('');
+                el.innerHTML = `<details><summary><span class="km-cp-latest">מצב עדכני (${fmtAt(latest.at)}): ${fmt(latest.km)} ק"מ, נסעת מתחילת החודש ${fmt(latest.km - start)}</span> · נקודות בדיקה (${list.length})</summary>${rows}</details>`;
+            }
+
             // עיגול: אדום = מה שנסעו מתוך היעד, ירוק = מה שנשאר; המספר בפנים = ק"מ שנותרו (או חריגה)
             function buildDonut(used, target, ariaSuffix) {
                 const radius = 29;
@@ -2745,6 +2820,8 @@
 
                 if (isLeasing) renderHistory(row, state);
 
+                renderCheckpoints(row, state);
+
                 statsEl.innerHTML = `<div class="km-stats-text">${lines.map(l => `<div>${l}</div>`).join('')}</div>${donutHtml}`;
             }
 
@@ -2755,7 +2832,7 @@
 
                 // רק הבדיקה הראשונה בכל חודש נשמרת (ונועלת את החודש); כל בדיקה נוספת
                 // באותו חודש היא תמונת מצב זמנית בלבד - מוצגת, לא נשמרת ולא דורסת את הנעול
-                function applyReading(rawValue) {
+                function applyReading(rawValue, record) {
                     const values = loadValues();
                     const state = values[car] || { current: null, openMonthKey: null, history: [] };
                     if (!state.history) state.history = [];
@@ -2783,12 +2860,20 @@
                         state.openMonthKey = monthKey;
                         state.current = parsed;
                         state.monthStartKm = parsed;
+                        state.checkpoints = [{ at: Date.now(), km: parsed, m: monthKey }];
 
                         values[car] = state;
                         saveValues(values);
                         computeAndRender(row, isLeasing, state);
                     } else {
-                        const previewState = Object.assign({}, state, { current: parsed, monthStartKm: state.monthStartKm != null ? state.monthStartKm : state.current });
+                        // שומרים נקודת בדיקה (להצגת מצב עדכני בלבד); החישובים עצמם נשארים כמו שהיו
+                        const checkpoints = monthCheckpoints(state);
+                        const lastPoint = checkpoints[checkpoints.length - 1];
+                        if (record && (!lastPoint || lastPoint.km !== parsed)) {
+                            checkpoints.push({ at: Date.now(), km: parsed, m: monthKey });
+                            saveCheckpoints(car, checkpoints);
+                        }
+                        const previewState = Object.assign({}, state, { current: parsed, monthStartKm: state.monthStartKm != null ? state.monthStartKm : state.current, checkpoints: checkpoints });
                         computeAndRender(row, isLeasing, previewState);
                     }
 
@@ -2829,16 +2914,17 @@
                     currentInput.value = saved.current;
                 }
 
-                // מריצים את הבדיקה גם בטעינת הדף (לא רק בלחיצה על "בדוק") - כך שגם אם נפתח הדף
-                // בחודש חדש בלי להזין כלום, הערך השמור הופך אוטומטית לנקודת ההתחלה של החודש
-                applyReading(currentInput.value);
+                // בטעינת הדף רק מציגים את המצב השמור. לא פותחים חודש חדש מכאן: אחרת פתיחת הדף
+                // ב-1 לחודש הייתה נועלת את הקריאה הישנה כתחילת החודש, וסוגרת את החודש הקודם
+                // לפי ערך שלא נבדק בפועל. פתיחת חודש נעשית רק בבדיקה אמיתית ("בדוק").
+                applyReading('');
 
                 // שומרים ומחשבים רק בלחיצה מפורשת על "בדוק" (לא תוך כדי הקלדה) - כדי שערך חלקי
                 // באמצע ההקלדה (למשל "2" לפני שמסיימים "20000") לא ייחשב בטעות כקריאת הרכב.
                 // אחרי בדיקה השדה מתרוקן - כדי שלא יישאר בו מספר ישן שנראה כמו "בדיקה קודמת" שכוחה
                 const checkBtn = row.querySelector('.km-check-btn');
                 const runCheck = () => {
-                    applyReading(currentInput.value);
+                    applyReading(currentInput.value, true);
                     currentInput.value = '';
                 };
                 checkBtn.addEventListener('click', runCheck);
@@ -2925,11 +3011,21 @@
                         monthStartKm = other.monthStartKm;
                     }
 
+                    // נקודות בדיקה: איחוד משני הצדדים, רק של החודש הפתוח (הישנות נושרות מעצמן)
+                    const cpMap = {};
+                    [local.checkpoints, cloud.checkpoints].forEach(arr => {
+                        (Array.isArray(arr) ? arr : Object.values(arr || {})).forEach(c => {
+                            if (c && c.m === base.openMonthKey && !isNaN(c.km)) cpMap[c.at] = c;
+                        });
+                    });
+                    const mergedCheckpoints = Object.values(cpMap).sort((a, b) => a.at - b.at);
+
                     const result = {
                         current: base.current,
                         openMonthKey: base.openMonthKey,
                         history: Object.keys(historyMap).map(k => ({ monthKey: k, km: historyMap[k] }))
                     };
+                    if (mergedCheckpoints.length) result.checkpoints = mergedCheckpoints;
                     if (monthStartKm != null) result.monthStartKm = monthStartKm;
                     if (Math.max(localRev, cloudRev) > 0) result.rev = Math.max(localRev, cloudRev);
                     return result;
@@ -3554,7 +3650,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-21-c';
+            const BUILD_ID = '2026-10-22-b';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
