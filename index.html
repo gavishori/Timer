@@ -1282,6 +1282,118 @@
                 text-align: center;
             }
 
+            /* ---- מחשבון השקעה גדול וברור: קלט מימין, תוצאות ככרטיסים משמאל ---- */
+            #investCalc.view-active .yield-body {
+                max-width: 1280px;
+            }
+
+            #investCalc.view-active .yield-header {
+                font-size: 1.8rem;
+                margin-bottom: 22px;
+            }
+
+            #investCalc.view-active .invest-layout {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+                gap: 48px;
+                align-items: start;
+            }
+
+            #investCalc.view-active .invest-group-title {
+                font-size: 1.15rem;
+                margin: 4px 0 16px 0;
+                text-align: right;
+            }
+
+            #investCalc.view-active .invest-group-title:not(:first-child) {
+                margin-top: 30px;
+            }
+
+            #investCalc.view-active .invest-toggle {
+                pointer-events: none;
+            }
+
+            #investCalc.view-active .invest-toggle .invest-costs-total {
+                float: left;
+                font-size: 1.25rem;
+                font-weight: 700;
+            }
+
+            #investCalc.view-active .invest-costs-body[hidden] {
+                display: block;
+            }
+
+            #investCalc.view-active .yield-field {
+                gap: 14px;
+                margin-bottom: 9px;
+            }
+
+            #investCalc.view-active .yield-field label {
+                flex: 0 0 170px;
+                font-size: 1.05rem;
+                color: #e3ebfb;
+            }
+
+            #investCalc.view-active .yield-input-wrap {
+                flex: 1 1 auto;
+            }
+
+            #investCalc.view-active .yield-field input {
+                font-size: 1.25rem;
+                padding: 9px 38px 9px 16px;
+                border-radius: 12px;
+            }
+
+            #investCalc.view-active .yield-input-wrap .currency {
+                font-size: 1.1rem;
+                right: 14px;
+            }
+
+            #investCalc.view-active .invest-results {
+                margin-top: 0;
+                padding-top: 0;
+                border-top: none;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            #investCalc.view-active .invest-row {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                border-radius: 16px;
+                padding: 20px 26px;
+                align-items: center;
+                gap: 18px;
+            }
+
+            #investCalc.view-active .invest-row:first-child {
+                background: rgba(255, 255, 255, 0.16);
+            }
+
+            #investCalc.view-active .invest-row .invest-label {
+                font-size: 1.15rem;
+                line-height: 1.4;
+                color: #e3ebfb;
+            }
+
+            #investCalc.view-active .invest-row .invest-value {
+                font-size: 2.2rem;
+                line-height: 1.15;
+            }
+
+            #investCalc.view-active .invest-row .invest-value small {
+                font-size: 1.05rem;
+                margin-top: 4px;
+                color: #cfe0ff;
+            }
+
+            #investCalc.view-active .invest-note {
+                font-size: 0.9rem;
+                margin-top: 16px;
+                text-align: center;
+            }
+
             /* ראשי: הטיימר גדול במרכז המסך */
             .center-header.view-active {
                 justify-content: center;
@@ -1631,6 +1743,8 @@
                     <span><span class="col-arrow">▸</span> 🏗️ מחשבון השקעה</span>
                 </h3>
                 <div class="yield-body">
+                <div class="invest-layout">
+                <div class="invest-inputs">
                 <div class="invest-group-title invest-toggle" id="investCostsToggle" role="button" tabindex="0" aria-expanded="false"><span class="col-arrow">▸</span> עלויות הפרויקט (בדולר) <span class="invest-costs-total" id="investCostsTotal"></span></div>
                 <div class="invest-costs-body" id="investCostsBody" hidden>
                 <div class="yield-field">
@@ -1698,8 +1812,12 @@
                         <span class="currency">%</span>
                     </div>
                 </div>
+                </div>
+                <div class="invest-output">
                 <div class="invest-results" id="investResults"></div>
                 <div class="invest-note">הרווח = מחיר המכירה אחרי הניכוי פחות ההשקעה הכספית; אחוז הרווח הוא הרווח ביחס להשקעה.</div>
+                </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -3436,7 +3554,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-21-a';
+            const BUILD_ID = '2026-10-21-c';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
