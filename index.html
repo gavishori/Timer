@@ -2804,7 +2804,11 @@
                 // מההיסטוריה, כדי שמיד אחרי הבדיקה הראשונה של החודש זה יראה 0 בדיוק
                 if (hasCurrent && state.openMonthKey != null) {
                     const monthStart = state.monthStartKm != null ? state.monthStartKm : current;
-                    const kmThisMonth = current - monthStart;
+                    // הקריאה העדכנית ביותר החודש = נקודת הבדיקה האחרונה (נשמרת גם אחרי רענון);
+                    // הסיכום החודשי הסופי נשאר לפי הקריאה הראשונה של כל חודש, ולא משתנה מזה
+                    const monthPoints = monthCheckpoints(state);
+                    const latestKm = monthPoints.length ? monthPoints[monthPoints.length - 1].km : current;
+                    const kmThisMonth = latestKm - monthStart;
                     kmThisMonthVal = kmThisMonth;
                     lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
                 } else {
@@ -3759,7 +3763,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-22-c';
+            const BUILD_ID = '2026-10-23-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
