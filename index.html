@@ -452,6 +452,61 @@
             vertical-align: middle;
         }
 
+        .month-alert {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: stretch;
+            max-width: min(560px, calc(100vw - 20px));
+            width: max-content;
+            background: #ffd166;
+            color: #2b2b2b;
+            border-radius: 14px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+        }
+
+        .month-alert[hidden] {
+            display: none;
+        }
+
+        .month-alert-main {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 0.85rem;
+            color: inherit;
+            text-align: right;
+            cursor: pointer;
+        }
+
+        .month-alert-main strong {
+            font-size: 0.95rem;
+        }
+
+        .month-alert-close {
+            flex: 0 0 auto;
+            padding: 0 14px;
+            background: rgba(0, 0, 0, 0.08);
+            border: none;
+            font-size: 1rem;
+            color: inherit;
+            cursor: pointer;
+        }
+
+        .side-nav button.alert::after {
+            content: " ●";
+            color: #ff6b6b;
+        }
+
         .km-checkpoints {
             margin-top: 6px;
             font-size: 0.72rem;
@@ -1613,6 +1668,14 @@
     </style>
 </head>
 <body>
+
+    <div class="month-alert" id="monthAlert" role="alert" hidden>
+        <button type="button" class="month-alert-main" id="monthAlertGo">
+            <strong>📅 בדוק תחילת חודש</strong>
+            <span>בצע קריאה ראשונה לצורך החישוב החודשי: <span id="monthAlertCars"></span></span>
+        </button>
+        <button type="button" class="month-alert-close" id="monthAlertClose" aria-label="הסתר">✕</button>
+    </div>
 
     <div class="container">
         <nav class="side-nav" id="sideNav" aria-label="תפריט ראשי">
@@ -2825,6 +2888,48 @@
                 statsEl.innerHTML = `<div class="km-stats-text">${lines.map(l => `<div>${l}</div>`).join('')}</div>${donutHtml}`;
             }
 
+            // התראת תחילת חודש: מוצגת כל עוד לרכב כלשהו עדיין אין קריאה ראשונה של החודש הנוכחי
+            const CAR_NAMES = { gray: 'ליסינג אפור', white: 'ליסינג לבן', lip: 'ליפ' };
+            const alertEl = document.getElementById('monthAlert');
+            function updateMonthAlert() {
+                if (!alertEl) return;
+                const nowKey = monthKeyOf(new Date());
+                const values = loadValues();
+                const pending = cars.filter(c => values[c] && values[c].openMonthKey != null && values[c].openMonthKey !== nowKey);
+
+                const navKm = document.querySelector('#sideNav [data-target="km"]');
+                if (navKm) navKm.classList.toggle('alert', pending.length > 0);
+
+                let dismissed = false;
+                try { dismissed = sessionStorage.getItem('month-alert-dismissed') === nowKey; } catch (e) {}
+                if (!pending.length || dismissed) {
+                    alertEl.hidden = true;
+                    return;
+                }
+                document.getElementById('monthAlertCars').textContent = pending.map(c => CAR_NAMES[c]).join(', ');
+                alertEl.hidden = false;
+            }
+
+            if (alertEl) {
+                document.getElementById('monthAlertGo').addEventListener('click', () => {
+                    const navBtn = document.querySelector('#sideNav [data-target="km"]');
+                    if (window.matchMedia('(min-width: 821px)').matches && navBtn) {
+                        navBtn.click();
+                    } else {
+                        if (tracker.classList.contains('collapsed')) tracker.querySelector('.km-header').click();
+                        tracker.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                });
+                document.getElementById('monthAlertClose').addEventListener('click', () => {
+                    try { sessionStorage.setItem('month-alert-dismissed', monthKeyOf(new Date())); } catch (e) {}
+                    alertEl.hidden = true;
+                });
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') updateMonthAlert();
+                });
+                setInterval(updateMonthAlert, 5 * 60 * 1000);
+            }
+
             tracker.querySelectorAll('.km-row').forEach(row => {
                 const car = row.dataset.car;
                 const isLeasing = car === 'gray' || car === 'white';
@@ -2926,6 +3031,7 @@
                 const runCheck = () => {
                     applyReading(currentInput.value, true);
                     currentInput.value = '';
+                    updateMonthAlert();
                 };
                 checkBtn.addEventListener('click', runCheck);
                 currentInput.addEventListener('keydown', (e) => {
@@ -2954,6 +3060,8 @@
                     toggle();
                 }
             });
+
+            updateMonthAlert();
 
             // סנכרון חי בין מכשירים לנתוני הקילומטראז' (אותו מנגנון Firebase שכבר משמש למשימות)
             (function connectKmSync() {
@@ -3060,6 +3168,7 @@
                         computeAndRender(row, rowIsLeasing, state);
                     });
                     renderKmChart();
+                    updateMonthAlert();
 
                     // אם המיזוג הוסיף/שינה משהו שלא היה בענן (למשל נתון מקומי שהענן לא הכיר) - מעדכנים את הענן
                     if (changed) {
@@ -3650,7 +3759,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-22-b';
+            const BUILD_ID = '2026-10-22-c';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
