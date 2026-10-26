@@ -509,7 +509,7 @@
             cursor: pointer;
         }
 
-        .side-nav button.alert::after {
+        .side-nav button.alert .nav-label::after {
             content: " ●";
             color: #ff6b6b;
         }
@@ -1289,19 +1289,50 @@
             .side-nav-title {
                 text-align: center;
                 font-weight: 700;
-                font-size: 1rem;
-                margin-bottom: 12px;
-                padding-bottom: 12px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+                font-size: 1.05rem;
+                margin-bottom: 8px;
             }
 
-            .side-nav button {
-                display: block;
+            .side-nav-status {
+                text-align: center;
+                font-size: 0.8rem;
+                color: #ffd166;
+                background: rgba(255, 209, 102, 0.12);
+                border: 1px solid rgba(255, 209, 102, 0.3);
+                border-radius: 999px;
+                padding: 5px 10px;
+                margin-bottom: 14px;
+            }
+
+            .nav-group {
+                margin: 16px 6px 6px 6px;
+                padding-top: 12px;
+                border-top: 1px solid rgba(255, 255, 255, 0.15);
+            }
+
+            .nav-group-title {
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0.5px;
+                color: #ffd166;
+            }
+
+            .nav-group-sub {
+                font-size: 0.7rem;
+                color: #9fb4dd;
+                margin-top: 1px;
+            }
+
+            .side-nav .nav-item {
+                display: flex;
+                align-items: center;
+                gap: 11px;
                 width: 100%;
-                padding: 12px 14px;
+                padding: 10px 12px;
                 border: none;
+                border-right: 4px solid transparent;
                 background: transparent;
-                color: #cfe0ff;
+                color: #dfe9ff;
                 font-size: 0.95rem;
                 font-family: inherit;
                 text-align: right;
@@ -1309,14 +1340,49 @@
                 cursor: pointer;
             }
 
-            .side-nav button:hover {
-                background: rgba(255, 255, 255, 0.12);
+            .side-nav .nav-item:hover {
+                background: rgba(255, 255, 255, 0.1);
             }
 
-            .side-nav button.active {
-                background: rgba(255, 255, 255, 0.24);
+            .side-nav .nav-item.active {
+                background: rgba(255, 255, 255, 0.2);
+                border-right-color: #ffd166;
                 color: #fff;
                 font-weight: 700;
+            }
+
+            .nav-ico {
+                flex: 0 0 auto;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 30px;
+                height: 30px;
+                border-radius: 9px;
+                background: rgba(255, 255, 255, 0.12);
+                font-size: 1rem;
+            }
+
+            .nav-label {
+                flex: 1 1 auto;
+            }
+
+            .nav-badge {
+                flex: 0 0 auto;
+                font-size: 0.7rem;
+                font-weight: 700;
+                color: #1e3c72;
+                background: #8bc34a;
+                border-radius: 999px;
+                padding: 2px 8px;
+            }
+
+            .nav-badge:empty {
+                display: none;
+            }
+
+            .nav-badge.open {
+                background: #ffd166;
             }
 
             .view-panel:not(.view-active) {
@@ -1745,13 +1811,43 @@
     <div class="container">
         <nav class="side-nav" id="sideNav" aria-label="תפריט ראשי">
             <div class="side-nav-title">עוברים לאבן יהודה 🏡</div>
-            <button type="button" data-target="home">🏠 ראשי</button>
-            <button type="button" data-target="tasks">✅ משימות</button>
-            <button type="button" data-target="housework">🧹 עבודות בית</button>
-            <button type="button" data-target="calendar">📅 לוח שנה</button>
-            <button type="button" data-target="km">🚗 מעקב קילומטראז'</button>
-            <button type="button" data-target="yield">💰 מחשבון תשואה</button>
-            <button type="button" data-target="invest">🏗️ מחשבון השקעה</button>
+            <div class="side-nav-status" id="navStatus"></div>
+
+            <button type="button" class="nav-item" data-target="home">
+                <span class="nav-ico">🏠</span><span class="nav-label">ראשי</span>
+            </button>
+
+            <div class="nav-group">
+                <div class="nav-group-title">עד המעבר</div>
+                <div class="nav-group-sub">פעולות שנעשו לפני</div>
+            </div>
+            <button type="button" class="nav-item" data-target="tasks">
+                <span class="nav-ico">✅</span><span class="nav-label">משימות</span><span class="nav-badge" id="navBadgeTasks"></span>
+            </button>
+            <button type="button" class="nav-item" data-target="housework">
+                <span class="nav-ico">🧹</span><span class="nav-label">עבודות בית</span><span class="nav-badge" id="navBadgeHousework"></span>
+            </button>
+
+            <div class="nav-group">
+                <div class="nav-group-title">מהמעבר</div>
+                <div class="nav-group-sub">מה צריך לעשות אחרי</div>
+            </div>
+            <button type="button" class="nav-item" data-target="calendar">
+                <span class="nav-ico">📅</span><span class="nav-label">לוח שנה</span>
+            </button>
+            <button type="button" class="nav-item" data-target="km">
+                <span class="nav-ico">🚗</span><span class="nav-label">מעקב קילומטראז'</span>
+            </button>
+
+            <div class="nav-group">
+                <div class="nav-group-title">נוספים</div>
+            </div>
+            <button type="button" class="nav-item" data-target="yield">
+                <span class="nav-ico">💰</span><span class="nav-label">מחשבון תשואה</span>
+            </button>
+            <button type="button" class="nav-item" data-target="invest">
+                <span class="nav-ico">🏗️</span><span class="nav-label">מחשבון השקעה</span>
+            </button>
         </nav>
         <div class="task-column collapsed view-panel" data-key="tasks" data-view="tasks">
             <h2 role="button" tabindex="0" aria-expanded="false"><span class="col-arrow">▸</span> משימות <span class="task-count"></span></h2>
@@ -2080,6 +2176,7 @@
             if (countEl) {
                 countEl.textContent = tasks.length ? `(${openCount}/${tasks.length})` : '';
             }
+            if (typeof window.updateNavBadges === 'function') window.updateNavBadges();
 
             // משימות שבוצעו יורדות לסוף הרשימה
             const sorted = [...tasks].sort((a, b) => Number(a.done) - Number(b.done));
@@ -3902,6 +3999,33 @@
 
             buttons.forEach(b => b.addEventListener('click', () => show(b.dataset.target)));
 
+            // סטטוס המעבר (למעלה בתפריט) וספירת משימות (בפריטים)
+            window.updateNavBadges = function () {
+                [['tasks', 'navBadgeTasks'], ['housework', 'navBadgeHousework']].forEach(([key, id]) => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    const list = (typeof loadTasks === 'function') ? loadTasks(key) : [];
+                    if (!list.length) { el.textContent = ''; return; }
+                    const open = list.filter(t => !t.done).length;
+                    el.textContent = open ? `${open}` : '✓';
+                    el.title = open ? `${open} פתוחות מתוך ${list.length}` : 'הכל בוצע';
+                    el.classList.toggle('open', open > 0);
+                });
+            };
+
+            function updateNavStatus() {
+                const el = document.getElementById('navStatus');
+                if (!el || typeof getCountdownParts !== 'function') return;
+                const parts = getCountdownParts();
+                el.textContent = parts.elapsed
+                    ? `🎉 באבן יהודה כבר ${parts.days} ימים`
+                    : `⏳ ${parts.days} ימים עד המעבר`;
+            }
+
+            window.updateNavBadges();
+            updateNavStatus();
+            setInterval(updateNavStatus, 60000);
+
             let initial = 'home';
             try { initial = localStorage.getItem(KEY) || 'home'; } catch (e) {}
             show(initial);
@@ -3911,7 +4035,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-27-a';
+            const BUILD_ID = '2026-10-27-c';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
