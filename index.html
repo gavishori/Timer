@@ -563,6 +563,27 @@
             font-weight: 700;
         }
 
+        .km-combined {
+            margin-top: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 0.78rem;
+            line-height: 1.6;
+            direction: rtl;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px;
+        }
+
+        .km-combined[hidden] { display: none; }
+        .km-combined .km-combined-title { font-weight: 700; color: #ffd166; margin-bottom: 2px; }
+
+        @media (min-width: 821px) {
+            .km-tracker.view-active .km-combined { grid-column: 1 / -1; justify-content: center; margin-top: 0; }
+        }
+
         .km-checkpoints {
             margin-top: 6px;
             font-size: 0.72rem;
@@ -1666,6 +1687,8 @@
                         <div class="km-stats"></div>
                     </div>
 
+                    <div class="km-combined" id="kmCombined" hidden></div>
+
                     <div class="km-chart-wrap">
                         <div class="km-chart-title">📊 נסועה חודשית - שלושת הרכבים</div>
                         <div class="km-chart-legend">
@@ -2589,6 +2612,30 @@
                     `<div class="km-fleet-total">סה"כ נספר במכסה (כל הרכבים): ${fmt(total)} ק"מ</div>`;
             }
 
+            // סיכום משותף לשני רכבי הליסינג עד סוף החודש (מחושב מהנתונים של כל רכב)
+            const leaseTotals = {};
+
+            function renderLeaseTotal() {
+                const el = document.getElementById('kmCombined');
+                if (!el) return;
+                const a = leaseTotals.gray, b = leaseTotals.white;
+                if (!a || !b) { el.hidden = true; return; }
+                const used = a.used + b.used;
+                const target = a.target + b.target;
+                const allowed = a.allowed + b.allowed;
+                const ytd = a.ytd + b.ytd;
+                const left = target - used;
+                el.innerHTML = buildDonut(used, target, 'שני הליסינג יחד עד סוף החודש') +
+                    '<div><div class="km-combined-title">שני הליסינג יחד - עד סוף החודש</div>' +
+                    '<div>מותר מצטבר (אפור + לבן): <strong>' + fmt(Math.round(allowed)) + '</strong> ק"מ</div>' +
+                    '<div>נסעו מתחילת הליסינג: <strong>' + fmt(Math.round(ytd)) + '</strong> ק"מ</div>' +
+                    (left < 0
+                        ? '<div class="km-warning">⚠️ חריגה משותפת של ' + fmt(Math.round(-left)) + ' ק"מ</div>'
+                        : '<div>נותר יחד עד סוף החודש: <strong>' + fmt(Math.round(left)) + '</strong> ק"מ</div>') +
+                    '</div>';
+                el.hidden = false;
+            }
+
             // עיגול: אדום = מה שנסעו מתוך היעד, ירוק = מה שנשאר; המספר בפנים = ק"מ שנותרו (או חריגה)
             function buildDonut(used, target, ariaSuffix) {
                 const radius = 29;
@@ -2675,6 +2722,8 @@
                         lines.push(`נותר עד סוף החודש: <strong>${fmt(Math.round(leftToMonthEnd))}</strong> ק"מ`);
                     }
                     monthlyDonut = buildDonut(kmThisMonthVal, allowedThroughMonthEnd - drivenBeforeMonth, 'מהמותר עד סוף החודש');
+                    leaseTotals[car] = { used: kmThisMonthVal, target: allowedThroughMonthEnd - drivenBeforeMonth, allowed: allowedThroughMonthEnd, ytd: drivenBeforeMonth + kmThisMonthVal };
+                    renderLeaseTotal();
                 }
 
                 if (isLeasing) {
@@ -3302,7 +3351,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-30-c';
+            const BUILD_ID = '2026-10-31-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
