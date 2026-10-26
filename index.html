@@ -514,6 +514,45 @@
             color: #ff6b6b;
         }
 
+        .km-fleet {
+            margin-top: 10px;
+            font-size: 0.72rem;
+            color: #e3ebfb;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .km-fleet summary {
+            cursor: pointer;
+            color: #cfe0ff;
+            font-weight: 600;
+        }
+
+        .km-fleet-item {
+            margin-top: 8px;
+            padding: 8px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            line-height: 1.6;
+        }
+
+        .km-fleet-item.current {
+            border-color: rgba(255, 209, 102, 0.6);
+        }
+
+        .km-fleet-name {
+            font-weight: 700;
+            color: #ffd166;
+        }
+
+        .km-fleet-total {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 700;
+        }
+
         .km-checkpoints {
             margin-top: 6px;
             font-size: 0.72rem;
@@ -2804,6 +2843,50 @@
                 el.innerHTML = `<details><summary><span class="km-cp-latest">מצב עדכני (${fmtAt(latest.at)}): ${fmt(latest.km)} ק"מ, נסעת מתחילת החודש ${fmt(latest.km - start)}</span> · נקודות בדיקה (${list.length})</summary>${rows}</details>`;
             }
 
+            // רצף הרכבים שנספרים במכסה של כל ליסינג: רכבי הגישור, ואז הלינק עצמו (המונה והתאריכים כפי שנמסרו)
+            const FLEET = {
+                gray: [
+                    { name: 'פזו (גישור)', from: '25.08.2026', start: 80201, to: '26.08.2026', end: 80250, approx: true },
+                    { name: 'טוסון (גישור)', from: '26.08.2026', start: 53351, to: '02.09.2026', end: 54041 },
+                    { name: 'לינק אפורה', from: '02.09.2026', start: 19563, to: null, end: null }
+                ],
+                white: [
+                    { name: 'מיצובישי (גישור)', from: '09.09.2026', start: 86106, to: '15.10.2026', end: 87640 },
+                    { name: 'לינק לבנה', from: '15.10.2026', start: 9699, to: null, end: null }
+                ]
+            };
+
+            function renderFleet(row, car, latest) {
+                const list = FLEET[car];
+                if (!list) return;
+                let el = row.querySelector('.km-fleet');
+                if (!el) {
+                    el = document.createElement('details');
+                    el.className = 'km-fleet';
+                    el.innerHTML = '<summary>🚙 פירוט רכבים (כולל רכבי הגישור)</summary><div class="km-fleet-body"></div>';
+                    const anchor = row.querySelector('.km-history') || row.querySelector('.km-stats');
+                    anchor.insertAdjacentElement('afterend', el);
+                }
+                let total = 0;
+                const items = list.map(v => {
+                    const current = v.end == null;
+                    const endKm = current ? latest : v.end;
+                    const driven = endKm != null ? endKm - v.start : null;
+                    if (driven != null) total += driven;
+                    const endLine = current
+                        ? `בשימוש כעת · מונה אחרון: <strong>${endKm != null ? fmt(endKm) : '—'}</strong>`
+                        : `הוחזר ${v.to} · מונה בהחזרה: <strong>${v.approx ? 'כ-' : ''}${fmt(endKm)}</strong>`;
+                    return `<div class="km-fleet-item${current ? ' current' : ''}">` +
+                        `<div class="km-fleet-name">${v.name}</div>` +
+                        `<div>התקבל ${v.from} · מונה בהתחלה: <strong>${fmt(v.start)}</strong></div>` +
+                        `<div>${endLine}</div>` +
+                        `<div>${current ? 'נסע עד כה' : 'נסע'}: <strong>${driven != null ? (v.approx ? 'כ-' : '') + fmt(driven) : '—'}</strong> ק"מ</div>` +
+                        `</div>`;
+                }).join('');
+                el.querySelector('.km-fleet-body').innerHTML = items +
+                    `<div class="km-fleet-total">סה"כ נספר במכסה (כל הרכבים): ${fmt(total)} ק"מ</div>`;
+            }
+
             // עיגול: אדום = מה שנסעו מתוך היעד, ירוק = מה שנשאר; המספר בפנים = ק"מ שנותרו (או חריגה)
             function buildDonut(used, target, ariaSuffix) {
                 const radius = 29;
@@ -2946,6 +3029,7 @@
                 if (isLeasing) renderHistory(row, state);
 
                 renderCheckpoints(row, state);
+                if (isLeasing) renderFleet(row, car, latestKmVal != null ? latestKmVal : (hasCurrent ? current : null));
 
                 statsEl.innerHTML = `<div class="km-stats-text">${lines.map(l => `<div>${l}</div>`).join('')}</div>${donutHtml}`;
             }
@@ -3827,7 +3911,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-26-c';
+            const BUILD_ID = '2026-10-27-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
