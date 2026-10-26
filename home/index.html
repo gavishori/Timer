@@ -13,7 +13,7 @@
             overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: #fff;
-            background: radial-gradient(ellipse at 50% 35%, #2a5298 0%, #1e3c72 45%, #0f1f3d 100%);
+            background: radial-gradient(ellipse at 50% 40%, #2a5298 0%, #1e3c72 45%, #0f1f3d 100%);
         }
 
         #stage {
@@ -110,10 +110,10 @@
             border: 1px solid rgba(255, 255, 255, 0.22);
             border-radius: 14px;
             backdrop-filter: blur(8px);
-            transition: background 0.15s, transform 0.15s, border-color 0.15s;
+            transition: background 0.15s, transform 0.15s;
         }
 
-                .dock a:hover, .dock a.active, .dock a:focus-visible {
+        .dock a:hover, .dock a.active, .dock a:focus-visible {
             background: rgba(255, 255, 255, 0.24);
             transform: translateY(-3px);
             outline: none;
@@ -149,19 +149,20 @@
 
     <div id="tip"></div>
 
-    <nav class="dock" id="dock" aria-label="יעדים"></nav>
+    <nav class="dock" id="dock" aria-label="פרויקטים"></nav>
 
     <div class="fallback" id="fallback">לא ניתן לטעון את הגביש התלת-ממדי - אפשר להשתמש בכפתורים למטה.</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // פאות הגביש = הפרויקטים (גביש חמש-פאי). הקישורים לפי הכתובות שבהן כל פרויקט מתפרסם.
+        // כל גביש בצביר = פרויקט. הקישורים לפי הכתובות שבהן כל פרויקט מתפרסם.
+        // pos/h/r = מיקום, גובה ורדיוס; lean = זווית הטיה החוצה (רדיאנים)
         const FACETS = [
-            { id: 'timer',  ico: '🏡', label: 'עוברים לאבן יהודה',     href: '../',                                         color: 0x4f8cff },
-            { id: 'house',  ico: '📊', label: 'ניהול הוצאות והכנסות',   href: 'https://gavishori.github.io/Manage_House/',   color: 0xffc247 },
-            { id: 'ziv',    ico: '🏢', label: 'פיכמן 5 - הכנסות והוצאות', href: 'https://gavishori.github.io/ZIV/',            color: 0x35c2c9 },
-            { id: 'radio',  ico: '📻', label: 'רדיו נקי',               href: 'https://gavishori.github.io/Radio/',          color: 0x9a6cff },
-            { id: 'lappid', ico: '🚑', label: 'חפ"ק לפיד',              href: 'https://gavishori.github.io/Lappid_Rescue/',  color: 0xff7a59 }
+            { id: 'timer',  ico: '🏡', label: 'עוברים לאבן יהודה',      href: '../',                                        color: 0x4f8cff, pos: [0, 0, 0],        h: 3.4, r: 0.66, lean: 0 },
+            { id: 'house',  ico: '📊', label: 'ניהול הוצאות והכנסות',    href: 'https://gavishori.github.io/Manage_House/',  color: 0xffc247, pos: [1.35, 0, 0.35],   h: 2.5, r: 0.52, lean: 0.34 },
+            { id: 'ziv',    ico: '🏢', label: 'פיכמן 5 - הכנסות והוצאות', href: 'https://gavishori.github.io/ZIV/',           color: 0x35c2c9, pos: [0.4, 0, 1.45],    h: 2.1, r: 0.46, lean: 0.4 },
+            { id: 'radio',  ico: '📻', label: 'רדיו נקי',                href: 'https://gavishori.github.io/Radio/',         color: 0x9a6cff, pos: [-1.3, 0, 0.55],   h: 2.7, r: 0.5, lean: 0.32 },
+            { id: 'lappid', ico: '🚑', label: 'חפ"ק לפיד',               href: 'https://gavishori.github.io/Lappid_Rescue/', color: 0xff7a59, pos: [-0.55, 0, -1.4],  h: 2.25, r: 0.48, lean: 0.38 }
         ];
 
         // ---- סטטוס המעבר (בלי שרת - מחושב מהתאריך) ----
@@ -173,12 +174,11 @@
                 : `⏳ ${days} ימים עד המעבר`;
         })();
 
-        // ---- כפתורי היעדים (תמיד קיימים - גם נגישות וגם גיבוי בלי WebGL) ----
+        // ---- כפתורי הפרויקטים (תמיד קיימים - גם נגישות וגם גיבוי בלי WebGL) ----
         const dock = document.getElementById('dock');
         const dockLinks = FACETS.map(f => {
             const a = document.createElement('a');
             a.href = f.href;
-            a.className = '';
             a.style.borderColor = '#' + f.color.toString(16).padStart(6, '0') + '99';
             a.innerHTML = `<span class="ico">${f.ico}</span><span>${f.label}</span>`;
             dock.appendChild(a);
@@ -191,95 +191,105 @@
             initCrystal();
         }
 
+        // גביש אחד: מנסרה משושה עם קצה מחודד למעלה ובסיס שטוח, בנויה ממשולשים
+        function crystalGeometry(r, h) {
+            const cap = r * 1.5;
+            const v = [];
+            const ring = [];
+            for (let k = 0; k < 6; k++) {
+                const a = (k * Math.PI) / 3 + Math.PI / 6;
+                ring.push([r * Math.cos(a), r * Math.sin(a)]);
+            }
+            for (let k = 0; k < 6; k++) {
+                const p = ring[k], q = ring[(k + 1) % 6];
+                v.push(p[0], 0, p[1],  q[0], 0, q[1],  q[0], h, q[1]);
+                v.push(p[0], 0, p[1],  q[0], h, q[1],  p[0], h, p[1]);
+                v.push(p[0], h, p[1],  q[0], h, q[1],  0, h + cap, 0);
+                v.push(q[0], 0, q[1],  p[0], 0, p[1],  0, 0, 0);
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+            geo.computeVertexNormals();
+            return geo;
+        }
+
         function initCrystal() {
             const stage = document.getElementById('stage');
             const tip = document.getElementById('tip');
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-            camera.position.set(0, 0.4, 9.2);
+            camera.position.set(0, 2.2, 10.5);
+            camera.lookAt(0, 0.3, 0);
 
             const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             stage.appendChild(renderer.domElement);
 
-            scene.add(new THREE.AmbientLight(0x8fa8ff, 0.55));
-            const key = new THREE.DirectionalLight(0xffffff, 1.1);
-            key.position.set(4, 6, 6);
+            scene.add(new THREE.AmbientLight(0x8fa8ff, 0.6));
+            const key = new THREE.DirectionalLight(0xffffff, 1.15);
+            key.position.set(4, 7, 6);
             scene.add(key);
-            const rim = new THREE.PointLight(0x7aa7ff, 1.6, 30);
-            rim.position.set(-5, -2, -4);
+            const rim = new THREE.PointLight(0x7aa7ff, 1.5, 30);
+            rim.position.set(-6, 1, -4);
             scene.add(rim);
-            const warm = new THREE.PointLight(0xffc247, 1.1, 30);
-            warm.position.set(5, -3, 3);
+            const warm = new THREE.PointLight(0xffc247, 1.0, 30);
+            warm.position.set(5, -1, 4);
             scene.add(warm);
 
-            // גביש: מנסרה (לפי מספר הפרויקטים) עם קודקודים מחודדים למעלה ולמטה; כל פאה = רצועה (צד + משולש עליון + משולש תחתון)
-            const R = 1.25, H = 2.3, CAP = 1.35;
-            const crystal = new THREE.Group();
-            scene.add(crystal);
-            const facetMeshes = [];
+            const cluster = new THREE.Group();
+            cluster.position.y = -1.6;
+            scene.add(cluster);
 
-            const N = FACETS.length;
-            const ring = (k) => {
-                const a1 = (k * 2 * Math.PI) / N - Math.PI / N;
-                const a2 = ((k + 1) * 2 * Math.PI) / N - Math.PI / N;
-                return [[R * Math.cos(a1), R * Math.sin(a1)], [R * Math.cos(a2), R * Math.sin(a2)]];
-            };
+            // סלע הבסיס שממנו צומחים הגבישים
+            const rock = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.3, 2.7, 0.5, 7, 1),
+                new THREE.MeshStandardMaterial({ color: 0x1a2f5c, roughness: 0.9, metalness: 0.1, flatShading: true })
+            );
+            rock.position.y = -0.24;
+            cluster.add(rock);
 
-            FACETS.forEach((f, k) => {
-                const [p1, p2] = ring(k);
-                const bot = -H / 2, top = H / 2;
-                const v = [
-                    // צד
-                    p1[0], bot, p1[1],  p2[0], bot, p2[1],  p2[0], top, p2[1],
-                    p1[0], bot, p1[1],  p2[0], top, p2[1],  p1[0], top, p1[1],
-                    // כיפה עליונה
-                    p1[0], top, p1[1],  p2[0], top, p2[1],  0, top + CAP, 0,
-                    // כיפה תחתונה
-                    p2[0], bot, p2[1],  p1[0], bot, p1[1],  0, bot - CAP, 0
-                ];
-                const geo = new THREE.BufferGeometry();
-                geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
-                geo.computeVertexNormals();
+            const meshes = [];
+            const up = new THREE.Vector3(0, 1, 0);
+            FACETS.forEach((f, i) => {
+                const pivot = new THREE.Group();
+                pivot.position.set(f.pos[0], 0.02, f.pos[2]);
+                if (f.lean) {
+                    const phi = Math.atan2(f.pos[2], f.pos[0]);
+                    const dir = new THREE.Vector3(Math.sin(f.lean) * Math.cos(phi), Math.cos(f.lean), Math.sin(f.lean) * Math.sin(phi));
+                    pivot.quaternion.setFromUnitVectors(up, dir);
+                }
+                pivot.rotation.y += 0; // הכיוון נקבע ע"י ה-quaternion
 
+                const geo = crystalGeometry(f.r, f.h);
                 const mat = new THREE.MeshPhysicalMaterial({
                     color: f.color,
                     metalness: 0.15,
-                    roughness: 0.12,
+                    roughness: 0.1,
                     clearcoat: 1,
-                    clearcoatRoughness: 0.08,
+                    clearcoatRoughness: 0.06,
                     transparent: true,
-                    opacity: 0.8,
+                    opacity: 0.84,
                     side: THREE.DoubleSide,
                     flatShading: true,
                     emissive: f.color,
-                    emissiveIntensity: 0.12
+                    emissiveIntensity: 0.14
                 });
                 const mesh = new THREE.Mesh(geo, mat);
-                mesh.userData = { index: k, facet: f };
-                crystal.add(mesh);
-                facetMeshes.push(mesh);
-
-                // קווי מסגרת דקים בין הפאות
-                const edges = new THREE.LineSegments(
+                mesh.userData = { index: i };
+                pivot.add(mesh);
+                pivot.add(new THREE.LineSegments(
                     new THREE.EdgesGeometry(geo, 1),
-                    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 })
-                );
-                crystal.add(edges);
+                    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })
+                ));
+                cluster.add(pivot);
+                meshes.push({ mesh, pivot });
             });
-
-            // ליבה זוהרת בתוך הגביש
-            const core = new THREE.Mesh(
-                new THREE.OctahedronGeometry(0.7, 0),
-                new THREE.MeshBasicMaterial({ color: 0xbcd4ff, wireframe: true, transparent: true, opacity: 0.55 })
-            );
-            crystal.add(core);
 
             // נצנוצים סביב
             const sparkGeo = new THREE.BufferGeometry();
-            const n = 220, pts = new Float32Array(n * 3);
+            const n = 240, pts = new Float32Array(n * 3);
             for (let i = 0; i < n; i++) {
-                const r = 3.2 + Math.random() * 4.5, t = Math.random() * Math.PI * 2, u = (Math.random() - 0.5) * 6;
+                const r = 3.4 + Math.random() * 4.5, t = Math.random() * Math.PI * 2, u = (Math.random() - 0.3) * 6;
                 pts[i * 3] = Math.cos(t) * r; pts[i * 3 + 1] = u; pts[i * 3 + 2] = Math.sin(t) * r - 2;
             }
             sparkGeo.setAttribute('position', new THREE.BufferAttribute(pts, 3));
@@ -291,14 +301,14 @@
             const pointer = new THREE.Vector2();
             const canvas = renderer.domElement;
             const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            let dragging = false, moved = 0, lastX = 0, lastY = 0, velY = reduceMotion ? 0 : 0.004, hovered = -1;
-            crystal.rotation.x = 0.18;
+            let dragging = false, moved = 0, lastX = 0, lastY = 0, velY = reduceMotion ? 0 : 0.0035, hovered = -1;
+            cluster.rotation.x = 0.05;
 
             function resize() {
                 const w = window.innerWidth, h = window.innerHeight;
                 renderer.setSize(w, h, false);
                 camera.aspect = w / h;
-                camera.position.z = w < 700 ? 12.5 : 9.2;
+                camera.position.z = w < 700 ? 15 : 10.5;
                 camera.updateProjectionMatrix();
             }
             window.addEventListener('resize', resize);
@@ -309,7 +319,7 @@
                 pointer.x = ((ev.clientX - r.left) / r.width) * 2 - 1;
                 pointer.y = -((ev.clientY - r.top) / r.height) * 2 + 1;
                 raycaster.setFromCamera(pointer, camera);
-                const hit = raycaster.intersectObjects(facetMeshes, false)[0];
+                const hit = raycaster.intersectObjects(meshes.map(m => m.mesh), false)[0];
                 return hit ? hit.object.userData.index : -1;
             }
 
@@ -338,8 +348,8 @@
                 if (dragging) {
                     const dx = e.clientX - lastX, dy = e.clientY - lastY;
                     moved += Math.abs(dx) + Math.abs(dy);
-                    crystal.rotation.y += dx * 0.01;
-                    crystal.rotation.x = Math.max(-0.9, Math.min(0.9, crystal.rotation.x + dy * 0.006));
+                    cluster.rotation.y += dx * 0.01;
+                    cluster.rotation.x = Math.max(-0.35, Math.min(0.5, cluster.rotation.x + dy * 0.004));
                     velY = dx * 0.002;
                     lastX = e.clientX; lastY = e.clientY;
                     setHover(-1);
@@ -355,7 +365,7 @@
                     const idx = pick(e);
                     if (idx >= 0) window.location.href = FACETS[idx].href;
                 } else if (!reduceMotion) {
-                    velY = Math.max(-0.02, Math.min(0.02, velY)) || 0.004;
+                    velY = Math.max(-0.02, Math.min(0.02, velY)) || 0.0035;
                 }
             });
 
@@ -370,17 +380,17 @@
             function frame() {
                 const t = clock.getElapsedTime();
                 if (!dragging) {
-                    crystal.rotation.y += velY;
-                    velY += ((reduceMotion ? 0 : 0.004) - velY) * 0.02;
+                    cluster.rotation.y += velY;
+                    velY += ((reduceMotion ? 0 : 0.0035) - velY) * 0.02;
                 }
-                crystal.position.y = reduceMotion ? 0 : Math.sin(t * 0.9) * 0.1;
-                core.rotation.y = t * 0.6;
-                core.rotation.x = t * 0.3;
+                cluster.position.y = -1.6 + (reduceMotion ? 0 : Math.sin(t * 0.9) * 0.06);
                 sparks.rotation.y = t * 0.02;
-                facetMeshes.forEach((m, i) => {
-                    const target = i === hovered ? 0.65 : 0.12;
-                    m.material.emissiveIntensity += (target - m.material.emissiveIntensity) * 0.15;
-                    m.material.opacity += ((i === hovered ? 0.95 : 0.8) - m.material.opacity) * 0.15;
+                meshes.forEach(({ mesh, pivot }, i) => {
+                    const on = i === hovered;
+                    mesh.material.emissiveIntensity += ((on ? 0.7 : 0.14) - mesh.material.emissiveIntensity) * 0.15;
+                    mesh.material.opacity += ((on ? 0.96 : 0.84) - mesh.material.opacity) * 0.15;
+                    const s = pivot.scale.x + ((on ? 1.05 : 1) - pivot.scale.x) * 0.15;
+                    pivot.scale.setScalar(s);
                 });
                 renderer.render(scene, camera);
                 requestAnimationFrame(frame);

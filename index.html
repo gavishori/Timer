@@ -459,6 +459,44 @@
             vertical-align: middle;
         }
 
+        .gavish-hub {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 60;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            text-decoration: none;
+            background: rgba(15, 31, 61, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (min-width: 821px) {
+            .gavish-hub { display: none; }
+        }
+
+        .side-nav-hub {
+            display: none;
+        }
+
+        @media (min-width: 821px) {
+            .side-nav a.side-nav-hub {
+                display: flex;
+                margin-top: auto;
+                text-decoration: none;
+                border: 1px solid rgba(255, 255, 255, 0.25);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
         .month-alert {
             position: fixed;
             top: 10px;
@@ -1836,6 +1874,7 @@
     </style>
 </head>
 <body>
+    <a id="gavishHub" class="gavish-hub" href="home/" title="גביש - כל הפרויקטים" aria-label="גביש - כל הפרויקטים">💎</a>
 
     <div class="month-alert" id="monthAlert" role="alert" hidden>
         <button type="button" class="month-alert-main" id="monthAlertGo">
@@ -1896,6 +1935,9 @@
                     </button>
                 </div>
             </div>
+                    <a class="nav-item side-nav-hub" href="home/">
+                <span class="nav-ico">💎</span><span class="nav-label">גביש - כל הפרויקטים</span>
+            </a>
         </nav>
         <div class="task-column collapsed view-panel" data-key="tasks" data-view="tasks">
             <h2 role="button" tabindex="0" aria-expanded="false"><span class="col-arrow">▸</span> משימות <span class="task-count"></span></h2>
@@ -4115,7 +4157,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-27-d';
+            const BUILD_ID = '2026-10-28-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
