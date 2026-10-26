@@ -1304,14 +1304,37 @@
                 margin-bottom: 14px;
             }
 
+            .nav-section {
+                margin-top: 10px;
+            }
+
             .nav-group {
-                margin: 16px 6px 6px 6px;
-                padding-top: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                margin: 0;
+                padding: 12px 10px 8px 10px;
+                background: none;
+                border: none;
                 border-top: 1px solid rgba(255, 255, 255, 0.15);
+                font-family: inherit;
+                color: inherit;
+                text-align: right;
+                cursor: pointer;
+            }
+
+            .nav-group:hover .nav-group-title {
+                color: #ffe29a;
+            }
+
+            .nav-group-text {
+                display: flex;
+                flex-direction: column;
             }
 
             .nav-group-title {
-                font-size: 0.78rem;
+                font-size: 0.82rem;
                 font-weight: 700;
                 letter-spacing: 0.5px;
                 color: #ffd166;
@@ -1321,6 +1344,20 @@
                 font-size: 0.7rem;
                 color: #9fb4dd;
                 margin-top: 1px;
+            }
+
+            .nav-group-arrow {
+                font-size: 0.8rem;
+                color: #ffd166;
+            }
+
+            .nav-group.alert .nav-group-title::after {
+                content: " ●";
+                color: #ff6b6b;
+            }
+
+            .nav-section.collapsed .nav-section-body {
+                display: none;
             }
 
             .side-nav .nav-item {
@@ -1817,37 +1854,48 @@
                 <span class="nav-ico">🏠</span><span class="nav-label">ראשי</span>
             </button>
 
-            <div class="nav-group">
-                <div class="nav-group-title">עד המעבר</div>
-                <div class="nav-group-sub">פעולות שנעשו לפני</div>
+            <div class="nav-section" data-section="before">
+                <button type="button" class="nav-group" aria-expanded="true">
+                    <span class="nav-group-text"><span class="nav-group-title">עד המעבר</span><span class="nav-group-sub">פעולות שנעשו לפני</span></span>
+                    <span class="nav-group-arrow">▾</span>
+                </button>
+                <div class="nav-section-body">
+                    <button type="button" class="nav-item" data-target="tasks">
+                        <span class="nav-ico">✅</span><span class="nav-label">משימות</span><span class="nav-badge" id="navBadgeTasks"></span>
+                    </button>
+                    <button type="button" class="nav-item" data-target="housework">
+                        <span class="nav-ico">🧹</span><span class="nav-label">עבודות בית</span><span class="nav-badge" id="navBadgeHousework"></span>
+                    </button>
+                </div>
             </div>
-            <button type="button" class="nav-item" data-target="tasks">
-                <span class="nav-ico">✅</span><span class="nav-label">משימות</span><span class="nav-badge" id="navBadgeTasks"></span>
-            </button>
-            <button type="button" class="nav-item" data-target="housework">
-                <span class="nav-ico">🧹</span><span class="nav-label">עבודות בית</span><span class="nav-badge" id="navBadgeHousework"></span>
-            </button>
-
-            <div class="nav-group">
-                <div class="nav-group-title">מהמעבר</div>
-                <div class="nav-group-sub">מה צריך לעשות אחרי</div>
+            <div class="nav-section" data-section="after">
+                <button type="button" class="nav-group" aria-expanded="true">
+                    <span class="nav-group-text"><span class="nav-group-title">מהמעבר</span><span class="nav-group-sub">מה צריך לעשות אחרי</span></span>
+                    <span class="nav-group-arrow">▾</span>
+                </button>
+                <div class="nav-section-body">
+                    <button type="button" class="nav-item" data-target="calendar">
+                        <span class="nav-ico">📅</span><span class="nav-label">לוח שנה</span>
+                    </button>
+                    <button type="button" class="nav-item" data-target="km">
+                        <span class="nav-ico">🚗</span><span class="nav-label">מעקב קילומטראז'</span>
+                    </button>
+                </div>
             </div>
-            <button type="button" class="nav-item" data-target="calendar">
-                <span class="nav-ico">📅</span><span class="nav-label">לוח שנה</span>
-            </button>
-            <button type="button" class="nav-item" data-target="km">
-                <span class="nav-ico">🚗</span><span class="nav-label">מעקב קילומטראז'</span>
-            </button>
-
-            <div class="nav-group">
-                <div class="nav-group-title">נוספים</div>
+            <div class="nav-section" data-section="more">
+                <button type="button" class="nav-group" aria-expanded="true">
+                    <span class="nav-group-text"><span class="nav-group-title">נוספים</span></span>
+                    <span class="nav-group-arrow">▾</span>
+                </button>
+                <div class="nav-section-body">
+                    <button type="button" class="nav-item" data-target="yield">
+                        <span class="nav-ico">💰</span><span class="nav-label">מחשבון תשואה</span>
+                    </button>
+                    <button type="button" class="nav-item" data-target="invest">
+                        <span class="nav-ico">🏗️</span><span class="nav-label">מחשבון השקעה</span>
+                    </button>
+                </div>
             </div>
-            <button type="button" class="nav-item" data-target="yield">
-                <span class="nav-ico">💰</span><span class="nav-label">מחשבון תשואה</span>
-            </button>
-            <button type="button" class="nav-item" data-target="invest">
-                <span class="nav-ico">🏗️</span><span class="nav-label">מחשבון השקעה</span>
-            </button>
         </nav>
         <div class="task-column collapsed view-panel" data-key="tasks" data-view="tasks">
             <h2 role="button" tabindex="0" aria-expanded="false"><span class="col-arrow">▸</span> משימות <span class="task-count"></span></h2>
@@ -3141,7 +3189,11 @@
                 const pending = cars.filter(c => values[c] && values[c].openMonthKey != null && values[c].openMonthKey !== nowKey);
 
                 const navKm = document.querySelector('#sideNav [data-target="km"]');
-                if (navKm) navKm.classList.toggle('alert', pending.length > 0);
+                if (navKm) {
+                    navKm.classList.toggle('alert', pending.length > 0);
+                    const kmHead = navKm.closest('.nav-section') && navKm.closest('.nav-section').querySelector('.nav-group');
+                    if (kmHead) kmHead.classList.toggle('alert', pending.length > 0);
+                }
 
                 let dismissed = false;
                 try { dismissed = sessionStorage.getItem('month-alert-dismissed') === nowKey; } catch (e) {}
@@ -3987,13 +4039,41 @@
             const nav = document.getElementById('sideNav');
             if (!nav) return;
             const panels = Array.from(document.querySelectorAll('.view-panel'));
-            const buttons = Array.from(nav.querySelectorAll('button'));
+            const buttons = Array.from(nav.querySelectorAll('button[data-target]'));
             const KEY = 'desktop-view';
+            const SECTIONS_KEY = 'desktop-nav-closed';
+
+            // קבוצות התפריט (עד המעבר / מהמעבר / נוספים) נפתחות ונסגרות, והמצב נשמר
+            let closed = {};
+            try { closed = JSON.parse(localStorage.getItem(SECTIONS_KEY) || '{}') || {}; } catch (e) {}
+            const sections = Array.from(nav.querySelectorAll('.nav-section'));
+
+            function setSection(sec, open, persist) {
+                sec.classList.toggle('collapsed', !open);
+                const head = sec.querySelector('.nav-group');
+                head.setAttribute('aria-expanded', String(open));
+                head.querySelector('.nav-group-arrow').textContent = open ? '▾' : '◂';
+                if (persist) {
+                    closed[sec.dataset.section] = !open;
+                    try { localStorage.setItem(SECTIONS_KEY, JSON.stringify(closed)); } catch (e) {}
+                }
+            }
+
+            sections.forEach(sec => {
+                setSection(sec, !closed[sec.dataset.section], false);
+                sec.querySelector('.nav-group').addEventListener('click', () => {
+                    setSection(sec, sec.classList.contains('collapsed'), true);
+                });
+            });
 
             function show(view) {
                 if (!panels.some(p => p.dataset.view === view)) view = 'home';
                 panels.forEach(p => p.classList.toggle('view-active', p.dataset.view === view));
                 buttons.forEach(b => b.classList.toggle('active', b.dataset.target === view));
+                // בחירת פריט בקבוצה סגורה פותחת אותה
+                const activeBtn = buttons.find(b => b.dataset.target === view);
+                const activeSection = activeBtn && activeBtn.closest('.nav-section');
+                if (activeSection && activeSection.classList.contains('collapsed')) setSection(activeSection, true, true);
                 try { localStorage.setItem(KEY, view); } catch (e) {}
             }
 
@@ -4035,7 +4115,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-27-c';
+            const BUILD_ID = '2026-10-27-d';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
