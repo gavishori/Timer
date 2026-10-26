@@ -567,8 +567,8 @@
             margin-top: 12px;
             padding: 10px 14px;
             display: flex;
-            align-items: center;
-            gap: 14px;
+            flex-direction: column;
+            gap: 8px;
             font-size: 0.78rem;
             line-height: 1.6;
             direction: rtl;
@@ -577,11 +577,25 @@
             border-radius: 14px;
         }
 
+        .km-combined-main { display: flex; align-items: center; gap: 14px; }
+
+        .km-combined-hist summary { cursor: pointer; color: #cfe0ff; font-weight: 700; }
+
+        .km-hist-body { margin-top: 8px; overflow-x: auto; }
+
+        .km-hist-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
+        .km-hist-table th, .km-hist-table td { padding: 5px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid rgba(255, 255, 255, 0.14); }
+        .km-hist-table th { color: #cfe0ff; font-weight: 700; }
+        .km-hist-table td.pos { color: #8bc34a; }
+        .km-hist-table td.neg { color: #ff8f8f; }
+        .km-hist-note { margin-top: 6px; color: #9fb4dd; font-size: 0.68rem; }
+
         .km-combined[hidden] { display: none; }
         .km-combined .km-combined-title { font-weight: 700; color: #ffd166; margin-bottom: 2px; }
 
         @media (min-width: 821px) {
-            .km-tracker.view-active .km-combined { grid-column: 1 / -1; justify-content: center; margin-top: 0; }
+            .km-tracker.view-active .km-combined { grid-column: 1 / -1; margin-top: 0; }
+            .km-tracker.view-active .km-combined-main { justify-content: center; }
         }
 
         .km-checkpoints {
@@ -1687,7 +1701,13 @@
                         <div class="km-stats"></div>
                     </div>
 
-                    <div class="km-combined" id="kmCombined" hidden></div>
+                    <div class="km-combined" id="kmCombined" hidden>
+                        <div class="km-combined-main" id="kmCombinedMain"></div>
+                        <details class="km-combined-hist">
+                            <summary>📆 מה היה בחודשים הקודמים</summary>
+                            <div class="km-hist-body" id="kmCombinedHistBody"></div>
+                        </details>
+                    </div>
 
                     <div class="km-chart-wrap">
                         <div class="km-chart-title">📊 נסועה חודשית - שלושת הרכבים</div>
@@ -2615,9 +2635,59 @@
             // סיכום משותף לשני רכבי הליסינג עד סוף החודש (מחושב מהנתונים של כל רכב)
             const leaseTotals = {};
 
+            // מה היה בחודשים שכבר נסגרו: כמה נסע כל רכב, כמה היה מותר באותו חודש (לפי ימים) והיתרה המצטברת
+            function renderLeaseHistory() {
+                const body = document.getElementById('kmCombinedHistBody');
+                if (!body) return;
+                const values = loadValues();
+                const cfg = ['gray', 'white'].map((car) => {
+                    const start = LEASE_STARTS[car];
+                    const end = new Date(start.getFullYear() + 1, start.getMonth(), start.getDate());
+                    const totalDays = Math.round((end - start) / 86400000);
+                    const hist = {};
+                    ((values[car] && values[car].history) || []).forEach((h) => { hist[h.monthKey] = h.km; });
+                    return { car, start, daily: ANNUAL_QUOTA / totalDays, hist, open: values[car] && values[car].openMonthKey };
+                });
+                const openKey = cfg[0].open || cfg[1].open;
+                const months = Array.from(new Set(cfg.flatMap((c) => Object.keys(c.hist))))
+                    .filter((k) => !openKey || compareMonthKeys(k, openKey) < 0)
+                    .sort(compareMonthKeys);
+                if (!months.length) { body.innerHTML = '<div class="km-hist-note">אין עדיין חודשים שנסגרו.</div>'; return; }
+
+                const daysInLease = (start, y, m) => {
+                    const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+                    const from = start > first ? start : first;
+                    return from > last ? 0 : Math.round((last - from) / 86400000) + 1;
+                };
+
+                let balance = 0;
+                const rows = months.map((k) => {
+                    const [y, m] = k.split('-').map(Number);
+                    const per = cfg.map((c) => {
+                        if (!(k in c.hist)) return { used: null, allowed: 0 };
+                        return { used: c.hist[k], allowed: c.daily * daysInLease(c.start, y, m) };
+                    });
+                    const used = per.reduce((t, x) => t + (x.used || 0), 0);
+                    const allowed = per.reduce((t, x) => t + x.allowed, 0);
+                    const diff = allowed - used;
+                    balance += diff;
+                    return { k, per, used, allowed, diff, balance };
+                });
+
+                const sign = (n) => (n >= 0 ? '+' : '-') + fmt(Math.abs(Math.round(n)));
+                const cls = (n) => (n >= 0 ? 'pos' : 'neg');
+                body.innerHTML = '<table class="km-hist-table"><thead><tr><th>חודש</th><th>אפור נסע</th><th>לבן נסע</th><th>יחד נסעו</th><th>מותר יחד</th><th>הפרש</th><th>מצטבר</th></tr></thead><tbody>' +
+                    rows.slice().reverse().map((r) =>
+                        '<tr><td>' + monthLabel(r.k) + '</td><td>' + (r.per[0].used == null ? '—' : fmt(r.per[0].used)) + '</td><td>' + (r.per[1].used == null ? '—' : fmt(r.per[1].used)) +
+                        '</td><td>' + fmt(r.used) + '</td><td>' + fmt(Math.round(r.allowed)) + '</td><td class="' + cls(r.diff) + '">' + sign(r.diff) + '</td><td class="' + cls(r.balance) + '">' + sign(r.balance) + '</td></tr>'
+                    ).join('') + '</tbody></table>' +
+                    '<div class="km-hist-note">הפרש = מותר פחות נסע (חיובי = נחסך). המותר מחושב לפי ימי הליסינג באותו חודש x המכסה היומית. רכבי הגישור כלולים.</div>';
+            }
+
             function renderLeaseTotal() {
+                const main = document.getElementById('kmCombinedMain');
                 const el = document.getElementById('kmCombined');
-                if (!el) return;
+                if (!main || !el) return;
                 const a = leaseTotals.gray, b = leaseTotals.white;
                 if (!a || !b) { el.hidden = true; return; }
                 const used = a.used + b.used;
@@ -2625,7 +2695,7 @@
                 const allowed = a.allowed + b.allowed;
                 const ytd = a.ytd + b.ytd;
                 const left = target - used;
-                el.innerHTML = buildDonut(used, target, 'שני הליסינג יחד עד סוף החודש') +
+                main.innerHTML = buildDonut(used, target, 'שני הליסינג יחד עד סוף החודש') +
                     '<div><div class="km-combined-title">שני הליסינג יחד - עד סוף החודש</div>' +
                     '<div>מותר מצטבר (אפור + לבן): <strong>' + fmt(Math.round(allowed)) + '</strong> ק"מ</div>' +
                     '<div>נסעו מתחילת הליסינג: <strong>' + fmt(Math.round(ytd)) + '</strong> ק"מ</div>' +
@@ -2633,6 +2703,7 @@
                         ? '<div class="km-warning">⚠️ חריגה משותפת של ' + fmt(Math.round(-left)) + ' ק"מ</div>'
                         : '<div>נותר יחד עד סוף החודש: <strong>' + fmt(Math.round(left)) + '</strong> ק"מ</div>') +
                     '</div>';
+                renderLeaseHistory();
                 el.hidden = false;
             }
 
@@ -3351,7 +3422,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-31-a';
+            const BUILD_ID = '2026-10-31-b';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
