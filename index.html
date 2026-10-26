@@ -2836,6 +2836,7 @@
                 let annualDonut = '';
                 let monthlyDonut = '';
                 let kmThisMonthVal = null;
+                let latestKmVal = null;
 
                 // "נסעת החודש" - תמיד מוצג: ההזנה הנוכחית (גם אם זו רק הצצה) פחות ההזנה
                 // הראשונה שבה בפועל נפתח החודש הנוכחי (monthStartKm) - לא חישוב נגזר
@@ -2848,6 +2849,7 @@
                     const latestKm = monthPoints.length ? monthPoints[monthPoints.length - 1].km : current;
                     const kmThisMonth = latestKm - monthStart;
                     kmThisMonthVal = kmThisMonth;
+                    latestKmVal = latestKm;
                     lines.push(`נסעת החודש: <strong>${fmt(kmThisMonth)}</strong> ק"מ`);
                 } else {
                     lines.push('נסעת החודש: — (הזינו ק"מ נוכחי)');
@@ -2865,37 +2867,29 @@
                     lines.push(`בחודש ${monthName} נסעת <strong>${fmt(lastClosed.km)}</strong> ק"מ`);
                 }
 
-                // מכסה חודשית ממוצעת (המכסה השנתית חלקי 12) וכמה נותר ממנה בחודש הנוכחי
+                // מכסה לפי ימים: 25,000 ק"מ על פני כל ימי שנת הליסינג. מה שמותר עד סוף החודש הנוכחי =
+                // מספר הימים מתחילת הליסינג ועד סוף החודש x המכסה היומית (כאילו נסעו בדיוק את המכסה בכל יום)
                 if (isLeasing && kmThisMonthVal != null) {
-                    const monthlyAllowance = ANNUAL_QUOTA / 12;
-                    const monthLeft = monthlyAllowance - kmThisMonthVal;
-                    lines.push(`מותר לנסוע בחודש: <strong>${fmt(Math.round(monthlyAllowance))}</strong> ק"מ`);
-                    if (monthLeft < 0) {
-                        lines.push(`<span class="km-warning">⚠️ חרגת החודש ב-${fmt(Math.round(-monthLeft))} ק"מ</span>`);
-                    } else {
-                        lines.push(`נותר לחודש הנוכחי: <strong>${fmt(Math.round(monthLeft))}</strong> ק"מ`);
-                    }
-
-                    // מכסה חודשית מצטברת: מה שנחסך בחודשים הקודמים מתווסף לחודש הזה (וחריגה קודמת מופחתת)
-                    const openParts = state.openMonthKey.split('-').map(Number);
                     const leaseStartDate = LEASE_STARTS[car];
-                    const monthsElapsed = Math.max(1, Math.min(12,
-                        (openParts[0] - leaseStartDate.getFullYear()) * 12 + openParts[1] - leaseStartDate.getMonth() + 1));
+                    const leaseEndDate = new Date(leaseStartDate.getFullYear() + 1, leaseStartDate.getMonth(), leaseStartDate.getDate());
+                    const totalLeaseDays = Math.round((leaseEndDate - leaseStartDate) / 86400000);
+                    const dailyQuota = ANNUAL_QUOTA / totalLeaseDays;
+                    const openParts = state.openMonthKey.split('-').map(Number);
+                    const monthEndDate = new Date(openParts[0], openParts[1] + 1, 0);
+                    const daysThroughMonthEnd = Math.max(0, Math.min(totalLeaseDays, Math.round((monthEndDate - leaseStartDate) / 86400000) + 1));
+                    const allowedThroughMonthEnd = dailyQuota * daysThroughMonthEnd;
                     const monthStartForBudget = state.monthStartKm != null ? state.monthStartKm : state.current;
                     const drivenBeforeMonth = monthStartForBudget - baseline;
-                    const budget = monthlyAllowance * monthsElapsed - drivenBeforeMonth;
-                    const carried = budget - monthlyAllowance;
-                    const budgetLeft = budget - kmThisMonthVal;
-                    const carriedText = carried >= 0
-                        ? `כולל ${fmt(Math.round(carried))} שנחסכו`
-                        : `אחרי חריגה של ${fmt(Math.round(-carried))} מחודשים קודמים`;
-                    lines.push(`מכסה החודש עם החיסכון: <strong>${fmt(Math.round(budget))}</strong> ק"מ (${carriedText})`);
-                    if (budgetLeft < 0) {
-                        lines.push(`<span class="km-warning">⚠️ חרגת מהמכסה המצטברת ב-${fmt(Math.round(-budgetLeft))} ק"מ</span>`);
+                    const leftToMonthEnd = allowedThroughMonthEnd - (drivenBeforeMonth + kmThisMonthVal);
+
+                    lines.push(`מכסה יומית: <strong>${dailyQuota.toFixed(1)}</strong> ק"מ ליום (${fmt(ANNUAL_QUOTA)} ÷ ${totalLeaseDays} ימים)`);
+                    lines.push(`מותר לנסוע עד סוף החודש: <strong>${fmt(Math.round(allowedThroughMonthEnd))}</strong> ק"מ מתחילת הליסינג (${daysThroughMonthEnd} ימים)`);
+                    if (leftToMonthEnd < 0) {
+                        lines.push(`<span class="km-warning">⚠️ חרגת מהמותר עד סוף החודש ב-${fmt(Math.round(-leftToMonthEnd))} ק"מ</span>`);
                     } else {
-                        lines.push(`נותר עד סוף החודש: <strong>${fmt(Math.round(budgetLeft))}</strong> ק"מ`);
+                        lines.push(`נותר עד סוף החודש: <strong>${fmt(Math.round(leftToMonthEnd))}</strong> ק"מ`);
                     }
-                    monthlyDonut = buildDonut(kmThisMonthVal, budget, 'מהמכסה החודשית המצטברת');
+                    monthlyDonut = buildDonut(kmThisMonthVal, allowedThroughMonthEnd - drivenBeforeMonth, 'מהמותר עד סוף החודש');
                 }
 
                 if (isLeasing) {
@@ -2907,7 +2901,7 @@
                         const daysElapsed = Math.max(0, Math.min(totalDays, Math.floor((now - leaseStart) / 86400000)));
                         const daysRemaining = Math.max(0, totalDays - daysElapsed);
 
-                        const kmThisYear = current - baseline;
+                        const kmThisYear = (latestKmVal != null ? latestKmVal : current) - baseline;
                         const kmRemaining = ANNUAL_QUOTA - kmThisYear;
                         const pct = (kmThisYear / ANNUAL_QUOTA) * 100;
 
@@ -2925,7 +2919,7 @@
                         }
 
                         const pctClass = pct > 100 ? 'km-warning' : (pct > 90 ? '' : 'km-ok');
-                        lines.push(`מצב שנתי: <span class="${pctClass}">${fmt(kmThisYear)} / ${fmt(ANNUAL_QUOTA)} ק"מ (${pct.toFixed(0)}%)</span>`);
+                        lines.push(`מצב שנתי: <span class="${pctClass}">${fmt(kmThisYear)} / ${fmt(ANNUAL_QUOTA)} ק"מ (${pct.toFixed(0)}%)</span>${kmRemaining >= 0 ? ` · נותרו <strong>${fmt(kmRemaining)}</strong>` : ''}`);
                     } else {
                         lines.push('מותר לנסוע ליום: —');
                         lines.push('מצב שנתי: —');
@@ -3833,7 +3827,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-26-b';
+            const BUILD_ID = '2026-10-26-c';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
