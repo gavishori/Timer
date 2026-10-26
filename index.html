@@ -4150,14 +4150,28 @@
 
             let initial = 'home';
             try { initial = localStorage.getItem(KEY) || 'home'; } catch (e) {}
+            // קישור עמוק מדף הבית (למשל ...#invest) גובר על החלון האחרון ששמור
+            const hashView = (location.hash || '').replace('#', '');
+            const fromHash = panels.some(p => p.dataset.view === hashView);
+            if (fromHash) initial = hashView;
             show(initial);
+
+            // בנייד אין תפריט צד: פותחים את הקוביה המבוקשת וגוללים אליה
+            if (fromHash && window.matchMedia('(max-width: 820px)').matches) {
+                const target = panels.find(p => p.dataset.view === hashView);
+                if (target && target.classList.contains('collapsed')) {
+                    const head = target.querySelector('.km-header, .yield-header, .cal-header, h2');
+                    if (head) head.click();
+                }
+                if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+            }
         })();
     </script>
     <script>
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-28-a';
+            const BUILD_ID = '2026-10-28-b';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
