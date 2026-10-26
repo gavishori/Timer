@@ -459,26 +459,6 @@
             vertical-align: middle;
         }
 
-        .gremson-link {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 10px;
-            padding: 12px;
-            text-decoration: none;
-            color: #cfe0ff;
-            font-weight: 700;
-            font-size: 0.85rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 14px;
-        }
-
-        @media (min-width: 821px) {
-            .gremson-link { display: none; }
-        }
-
         .gavish-hub {
             position: fixed;
             top: 10px;
@@ -1610,17 +1590,6 @@
                     </button>
                 </div>
             </div>
-            <div class="nav-section" data-section="more">
-                <button type="button" class="nav-group" aria-expanded="true">
-                    <span class="nav-group-text"><span class="nav-group-title">נוספים</span></span>
-                    <span class="nav-group-arrow">▾</span>
-                </button>
-                <div class="nav-section-body">
-                    <a class="nav-item" href="gremson/" style="text-decoration:none">
-                        <span class="nav-ico">🤝</span><span class="nav-label">GREMSON - מחשבון שותפות</span>
-                    </a>
-                </div>
-            </div>
                     <a class="nav-item side-nav-hub" href="home/">
                 <span class="nav-ico">💎</span><span class="nav-label">גביש - כל הפרויקטים</span>
             </a>
@@ -1743,8 +1712,6 @@
                 </div>
             </div>
 
-
-            <a class="gremson-link" href="gremson/">🤝 GREMSON - מחשבון שותפות</a>
         </div>
 
         <div class="task-column collapsed view-panel" data-key="housework" data-view="housework">
@@ -3366,7 +3333,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-29-b';
+            const BUILD_ID = '2026-10-30-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
