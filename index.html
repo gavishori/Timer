@@ -558,6 +558,25 @@
             display: block;
         }
 
+        .km-donuts {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .km-donut-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .km-donut-cap {
+            font-size: 0.62rem;
+            color: #cfe0ff;
+        }
+
         .km-donut text {
             fill: #ffffff;
             text-anchor: middle;
@@ -2781,7 +2800,7 @@
                 const radius = 29;
                 const circ = 2 * Math.PI * radius;
                 const remaining = target - used;
-                const usedFrac = Math.max(0, Math.min(1, used / target));
+                const usedFrac = target > 0 ? Math.max(0, Math.min(1, used / target)) : 1;
                 const over = remaining < 0;
                 const centerNum = fmt(Math.round(over ? -remaining : remaining));
                 const centerLabel = over ? 'חריגה' : 'נותרו';
@@ -2805,6 +2824,8 @@
 
                 const lines = [];
                 let donutHtml = '';
+                let annualDonut = '';
+                let monthlyDonut = '';
                 let kmThisMonthVal = null;
 
                 // "נסעת החודש" - תמיד מוצג: ההזנה הנוכחית (גם אם זו רק הצצה) פחות ההזנה
@@ -2845,6 +2866,27 @@
                     } else {
                         lines.push(`נותר לחודש הנוכחי: <strong>${fmt(Math.round(monthLeft))}</strong> ק"מ`);
                     }
+
+                    // מכסה חודשית מצטברת: מה שנחסך בחודשים הקודמים מתווסף לחודש הזה (וחריגה קודמת מופחתת)
+                    const openParts = state.openMonthKey.split('-').map(Number);
+                    const leaseStartDate = LEASE_STARTS[car];
+                    const monthsElapsed = Math.max(1, Math.min(12,
+                        (openParts[0] - leaseStartDate.getFullYear()) * 12 + openParts[1] - leaseStartDate.getMonth() + 1));
+                    const monthStartForBudget = state.monthStartKm != null ? state.monthStartKm : state.current;
+                    const drivenBeforeMonth = monthStartForBudget - baseline;
+                    const budget = monthlyAllowance * monthsElapsed - drivenBeforeMonth;
+                    const carried = budget - monthlyAllowance;
+                    const budgetLeft = budget - kmThisMonthVal;
+                    const carriedText = carried >= 0
+                        ? `כולל ${fmt(Math.round(carried))} שנחסכו`
+                        : `אחרי חריגה של ${fmt(Math.round(-carried))} מחודשים קודמים`;
+                    lines.push(`מכסה החודש עם החיסכון: <strong>${fmt(Math.round(budget))}</strong> ק"מ (${carriedText})`);
+                    if (budgetLeft < 0) {
+                        lines.push(`<span class="km-warning">⚠️ חרגת מהמכסה המצטברת ב-${fmt(Math.round(-budgetLeft))} ק"מ</span>`);
+                    } else {
+                        lines.push(`נותר עד סוף החודש: <strong>${fmt(Math.round(budgetLeft))}</strong> ק"מ`);
+                    }
+                    monthlyDonut = buildDonut(kmThisMonthVal, budget, 'מהמכסה החודשית המצטברת');
                 }
 
                 if (isLeasing) {
@@ -2860,7 +2902,7 @@
                         const kmRemaining = ANNUAL_QUOTA - kmThisYear;
                         const pct = (kmThisYear / ANNUAL_QUOTA) * 100;
 
-                        donutHtml = buildDonut(kmThisYear, ANNUAL_QUOTA, 'מהמכסה השנתית');
+                        annualDonut = buildDonut(kmThisYear, ANNUAL_QUOTA, 'מהמכסה השנתית');
 
                         if (daysRemaining > 0) {
                             const dailyAllowance = kmRemaining / daysRemaining;
@@ -2879,6 +2921,11 @@
                         lines.push('מותר לנסוע ליום: —');
                         lines.push('מצב שנתי: —');
                     }
+                }
+
+                if (isLeasing && (annualDonut || monthlyDonut)) {
+                    const box = (svg, cap) => svg ? `<div class="km-donut-box">${svg}<div class="km-donut-cap">${cap}</div></div>` : '';
+                    donutHtml = `<div class="km-donuts">${box(annualDonut, 'שנתי')}${box(monthlyDonut, 'החודש')}</div>`;
                 }
 
                 // ליפ אין מכסה שנתית: העיגול משווה את החודש הנוכחי לנסועה של החודש הקודם שנסגר
@@ -3770,7 +3817,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-23-b';
+            const BUILD_ID = '2026-10-26-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
