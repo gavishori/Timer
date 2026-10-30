@@ -1,0 +1,10 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "app-1b3c84cf218410393163a85b": {
+      ".read": "auth != null && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.replace('.', ',')).exists()",
+      ".write": "auth != null && auth.token.email_verified == true && root.child('allowed').child(auth.token.email.replace('.', ',')).exists()"
+    }
+  }
+}
