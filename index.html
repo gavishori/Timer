@@ -2999,6 +2999,25 @@
                     }
                 }
 
+                // תיקון טעות הקלדה (1.11.2026): הקריאה הראשונה של נובמבר באפור הוזנה 24979 במקום 24797.
+                // מתקן גם את הקריאה, גם את נסועת אוקטובר שנגזרה ממנה, וגם את נקודת הבדיקה הראשונה.
+                // התנאי מזהה את הערך השגוי בלבד, ולכן אחרי התיקון הוא לא פועל שוב.
+                if (car === 'gray') {
+                    const fixValues = loadValues();
+                    const st = fixValues.gray;
+                    if (st && st.openMonthKey === '2026-10' && st.current === 24979) {
+                        const OCT_START = 22490;
+                        st.current = 24797;
+                        st.monthStartKm = 24797;
+                        (st.history || []).forEach((h) => { if (h.monthKey === '2026-9') h.km = 24797 - OCT_START; });
+                        const cps = Array.isArray(st.checkpoints) ? st.checkpoints : Object.values(st.checkpoints || {});
+                        st.checkpoints = cps.map((c) => (c && c.m === '2026-10' && c.km === 24979) ? Object.assign({}, c, { km: 24797 }) : c);
+                        st.rev = Math.max(st.rev || 0, 4);
+                        fixValues.gray = st;
+                        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(fixValues)); } catch (e) {}
+                    }
+                }
+
                 const stored = loadValues();
                 const saved = stored[car];
                 if (saved) {
@@ -3429,7 +3448,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-11-01-a';
+            const BUILD_ID = '2026-11-01-b';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
