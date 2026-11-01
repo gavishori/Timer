@@ -2404,6 +2404,7 @@
             // תחילת שנת הליסינג לכל רכב (המכסה: 25,000 ק"מ לשנה מהתאריך הזה)
             const LEASE_STARTS = { gray: new Date(2026, 7, 25), white: new Date(2026, 8, 9) }; // אפור 25.08.2026, לבן 09.09.2026 (תחילת המיצובישי שנספר ללינק)
             const ANNUAL_QUOTA = 25000;
+            const LIP_MONTHLY_TARGET = 1500; // יעד נסיעה חודשי לליפ
             // ק"מ שהיה במונה בתחילת שנת הליסינג של כל רכב (ליפ: הקריאה הראשונה של ספטמבר)
             // לבן: הלינק מתחילה ב-9,699 (15.10.2026) ואליה נספרים 1,534 ק"מ של המיצובישי (86,106->87,640),
             // ולכן "מונה בסיס" וירטואלי של 9,699 - 1,534 = 8,165
@@ -2842,16 +2843,16 @@
                     donutHtml = `<div class="km-donuts">${box(annualDonut, 'שנתי')}${box(monthlyDonut, 'החודש')}</div>`;
                 }
 
-                // ליפ אין מכסה שנתית: העיגול משווה את החודש הנוכחי לנסועה של החודש הקודם שנסגר
-                if (!isLeasing && kmThisMonthVal != null && lastClosed && lastClosed.km > 0) {
-                    const monthName = HEBREW_MONTHS[Number(lastClosed.monthKey.split('-')[1])];
-                    const left = lastClosed.km - kmThisMonthVal;
+                // ליפ: יעד נסיעה חודשי קבוע (אין לו מכסה שנתית)
+                if (!isLeasing && kmThisMonthVal != null) {
+                    const left = LIP_MONTHLY_TARGET - kmThisMonthVal;
+                    lines.push(`יעד חודשי: <strong>${fmt(LIP_MONTHLY_TARGET)}</strong> ק"מ`);
                     if (left < 0) {
-                        lines.push(`<span class="km-warning">⚠️ עברת את חודש ${monthName} ב-${fmt(Math.round(-left))} ק"מ</span>`);
+                        lines.push(`<span class="km-warning">⚠️ עברת את היעד החודשי ב-${fmt(Math.round(-left))} ק"מ</span>`);
                     } else {
-                        lines.push(`נותר עד לרמת חודש ${monthName}: <strong>${fmt(Math.round(left))}</strong> ק"מ`);
+                        lines.push(`נותר עד היעד החודשי: <strong>${fmt(Math.round(left))}</strong> ק"מ`);
                     }
-                    donutHtml = buildDonut(kmThisMonthVal, lastClosed.km, 'ביחס לחודש הקודם');
+                    donutHtml = buildDonut(kmThisMonthVal, LIP_MONTHLY_TARGET, 'מהיעד החודשי');
                 }
 
                 if (isLeasing) renderHistory(row, state);
@@ -3428,7 +3429,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-10-31-b';
+            const BUILD_ID = '2026-11-01-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
