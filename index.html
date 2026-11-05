@@ -2793,6 +2793,19 @@
                     const leftToMonthEnd = allowedThroughMonthEnd - (drivenBeforeMonth + kmThisMonthVal);
 
                     lines.push(`מכסה יומית: <strong>${dailyQuota.toFixed(1)}</strong> ק"מ ליום (${fmt(ANNUAL_QUOTA)} ÷ ${totalLeaseDays} ימים)`);
+
+                    // מותר לנסוע עד סוף היום: ימי הליסינג עד היום (כולל) x המכסה היומית, פחות מה שכבר נסעו.
+                    // יום שלא נסעו בו מצטבר: אם מותר 60 ביום ולא נסעו, מחר מותר 120.
+                    const nowDate = new Date();
+                    const todayStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate());
+                    const daysThroughToday = Math.max(0, Math.min(totalLeaseDays, Math.round((todayStart - leaseStartDate) / 86400000) + 1));
+                    const allowedThroughToday = dailyQuota * daysThroughToday;
+                    const leftToday = allowedThroughToday - (drivenBeforeMonth + kmThisMonthVal);
+                    if (leftToday < 0) {
+                        lines.push(`<span class="km-warning">⚠️ חרגת מהמותר עד סוף היום ב-${fmt(Math.round(-leftToday))} ק"מ</span>`);
+                    } else {
+                        lines.push(`מותר לנסוע עד סוף היום: <strong>${fmt(Math.round(leftToday))}</strong> ק"מ (כולל ימים שלא נסעו)`);
+                    }
                     lines.push(`מותר לנסוע עד סוף החודש: <strong>${fmt(Math.round(allowedThroughMonthEnd))}</strong> ק"מ מתחילת הליסינג (${daysThroughMonthEnd} ימים)`);
                     if (leftToMonthEnd < 0) {
                         lines.push(`<span class="km-warning">⚠️ חרגת מהמותר עד סוף החודש ב-${fmt(Math.round(-leftToMonthEnd))} ק"מ</span>`);
@@ -3448,7 +3461,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-11-01-b';
+            const BUILD_ID = '2026-11-05-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
