@@ -103,12 +103,13 @@
     msgEl = root.getElementById("msg");
     btnEl.onclick = signIn;
     root.getElementById("x").onclick = () => {
-      try { localStorage.setItem(DISMISS_KEY, "1"); } catch {}
+      try { sessionStorage.setItem(DISMISS_KEY, "1"); } catch {}
       draw();
     };
     (document.body || document.documentElement).appendChild(box);
   }
-  const dismissed = () => { try { return localStorage.getItem(DISMISS_KEY) === "1"; } catch { return false; } };
+  // The X hides the button only until the tab is closed; it always comes back on the next visit.
+  const dismissed = () => { try { return sessionStorage.getItem(DISMISS_KEY) === "1"; } catch { return false; } };
   function draw(msg = "") {
     if (!document.body) return document.addEventListener("DOMContentLoaded", () => draw(msg), { once: true });
     const need = !user || denied;
@@ -134,6 +135,9 @@
       draw(e.code === "auth/popup-blocked" ? "הדפדפן חסם את חלון הכניסה. פתחו את הקישור בכרום או בספארי." : `הכניסה נכשלה (${e.code || e.message}).`);
     }
   }
+
+  // Pages can start the sign-in themselves (e.g. a tap on their own "not connected" status).
+  window.gavishAuth = { signIn: () => { try { localStorage.removeItem(DISMISS_KEY); sessionStorage.removeItem(DISMISS_KEY); } catch {} return signIn(); }, get signedIn() { return !!user && !denied; } };
 
   // ---- load Firebase Auth; until it answers, database calls wait
   (async () => {

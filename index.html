@@ -1148,6 +1148,23 @@
                 margin-bottom: 14px;
             }
 
+            .side-nav-sync {
+                text-align: center;
+                font-size: 0.75rem;
+                color: #cfe0ff;
+                margin: -8px 0 12px;
+                padding: 4px 8px;
+                border-radius: 999px;
+                cursor: default;
+            }
+
+            .side-nav-sync.bad {
+                color: #ffb3b3;
+                background: rgba(255, 107, 107, 0.15);
+                border: 1px solid rgba(255, 107, 107, 0.4);
+                cursor: pointer;
+            }
+
             .nav-section {
                 margin-top: 10px;
             }
@@ -1570,6 +1587,7 @@
         <nav class="side-nav" id="sideNav" aria-label="תפריט ראשי">
             <div class="side-nav-title">עוברים לאבן יהודה 🏡</div>
             <div class="side-nav-status" id="navStatus"></div>
+            <div class="side-nav-sync" id="navSync" role="button" tabindex="0" title="מצב הסנכרון בענן - לחיצה כשלא מחובר פותחת כניסה עם Google"></div>
 
             <button type="button" class="nav-item" data-target="home">
                 <span class="nav-ico">🏠</span><span class="nav-label">ראשי</span>
@@ -3451,6 +3469,23 @@
                     ? `🎉 באבן יהודה כבר ${parts.days} ימים`
                     : `⏳ ${parts.days} ימים עד המעבר`;
             }
+
+            // מצב הסנכרון מוצג תמיד בתפריט הצד (גם כשהחלון הראשי לא פתוח); כשלא מחובר - לחיצה פותחת כניסה
+            (function mirrorSyncStatus() {
+                const src = document.getElementById('syncStatus');
+                const dst = document.getElementById('navSync');
+                if (!src || !dst) return;
+                const mirror = () => {
+                    dst.textContent = src.textContent;
+                    dst.classList.toggle('bad', /לא מחובר/.test(src.textContent));
+                };
+                new MutationObserver(mirror).observe(src, { childList: true, characterData: true, subtree: true });
+                const start = () => { if (/לא מחובר/.test(src.textContent) && window.gavishAuth) window.gavishAuth.signIn(); };
+                dst.addEventListener('click', start);
+                src.addEventListener('click', start);
+                dst.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(); } });
+                mirror();
+            })();
 
             window.updateNavBadges();
             updateNavStatus();
