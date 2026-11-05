@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>עוברים לאבן יהודה</title>
+    <link rel="manifest" href="manifest.webmanifest">
     <script src="https://gavishori.github.io/Timer/gavish-auth.js"></script>
     <style>
         * {
@@ -3514,7 +3515,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-11-05-b';
+            const BUILD_ID = '2026-11-05-c';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });

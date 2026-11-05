@@ -1,0 +1,11 @@
+{
+  "name": "עוברים לאבן יהודה",
+  "short_name": "אבן יהודה",
+  "start_url": "./",
+  "scope": "./",
+  "display": "browser",
+  "lang": "he",
+  "dir": "rtl",
+  "background_color": "#1e3c72",
+  "theme_color": "#1e3c72"
+}
