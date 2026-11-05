@@ -139,6 +139,11 @@
   // Pages can start the sign-in themselves (e.g. a tap on their own "not connected" status).
   window.gavishAuth = { signIn: () => { try { localStorage.removeItem(DISMISS_KEY); sessionStorage.removeItem(DISMISS_KEY); } catch {} return signIn(); }, get signedIn() { return !!user && !denied; } };
 
+  // If Firebase Auth never answers (blocked script, locked storage in a home-screen shortcut), stop waiting
+  // after a few seconds so the page shows "not connected" with a working sign-in instead of "connecting" forever.
+  // A late answer still works: onAuthStateChanged reopens the streams with the user's token.
+  setTimeout(() => { markReady(); draw(); }, 5000);
+
   // ---- load Firebase Auth; until it answers, database calls wait
   (async () => {
     try {
