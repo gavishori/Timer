@@ -148,8 +148,8 @@
     emEl.hidden = setpw;
     paEl.autocomplete = setpw ? "new-password" : "current-password";
     goEl.textContent = setpw ? "שמירת סיסמה" : "כניסה";
-    btnEl.hidden = !!user || login;
-    btnEl.textContent = standalone ? "☁️ כניסה לסנכרון" : "☁️ כניסה עם Google לסנכרון";
+    btnEl.hidden = (!!user && !denied) || login;
+    btnEl.textContent = user ? "🔄 כניסה מחדש עם Google" : standalone ? "☁️ כניסה לסנכרון" : "☁️ כניסה עם Google לסנכרון";
     msgEl.textContent = msg || (setpw ? "הגדרת סיסמה (פעם אחת) תאפשר להיכנס גם מאפליקציה במסך הבית:"
       : denied && user ? `לחשבון ${user.email} אין גישה לסנכרון. עובד רק במכשיר הזה.` : "");
   }
