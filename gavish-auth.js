@@ -11,7 +11,7 @@
   // Web client ID of the Google provider (Firebase console > Authentication > Sign-in method > Google > Web SDK configuration).
   // When set, sign-in uses Google's own popup, which also works in home-screen shortcuts; when empty, Firebase's popup is used.
   // https://gavishori.github.io must be listed as an authorized JavaScript origin of this client in Google Cloud Console.
-  const GIS_CLIENT_ID = "";
+  const GIS_CLIENT_ID = "768052941236-jc4d2e6vf7btrvbqflr9vl2j1pvaknll.apps.googleusercontent.com";
   const DISMISS_KEY = "gavish-auth-dismissed";
   const bottom = document.currentScript?.dataset.bottom || "12";
 
