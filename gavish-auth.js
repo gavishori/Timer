@@ -174,6 +174,9 @@
   // A late answer still works: onAuthStateChanged reopens the streams with the user's token.
   setTimeout(() => { markReady(); draw(); }, 5000);
 
+  // Ask the browser not to evict this site's storage (where the signed-in session lives) when it cleans up.
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch {}
+
   // ---- load Firebase Auth; until it answers, database calls wait
   (async () => {
     try {
