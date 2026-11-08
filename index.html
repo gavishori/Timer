@@ -2813,34 +2813,53 @@
 
                     lines.push(`מכסה יומית: <strong>${dailyQuota.toFixed(1)}</strong> ק"מ ליום (${fmt(ANNUAL_QUOTA)} ÷ ${totalLeaseDays} ימים)`);
 
-                    // מותר לנסוע עד סוף היום: מכסת היום + מה שנשאר מאתמול בלבד (בלי שאר הימים).
-                    // אם מותר 60 ביום ולא נסעו אתמול, היום מותר 120. אם נסעו אתמול יותר מדי, זה מקטין את היום.
-                    // מה שנסעו אתמול נאמד לפי הקריאות שהוזנו: בין שתי קריאות הנסיעה מחולקת שווה לאורך הזמן.
-                    const dayPoints = monthCheckpoints(state);
-                    if (dayPoints.length) {
+                    // מותר לנסוע עד סוף היום: מכסת היום + מה שנצבר מימים קודמים שלא נוצלו (מצטבר).
+                    // כל יום מוסיף את המכסה היומית ומפחית את מה שנסעו בו. עודף עובר ליום הבא (שני ימים בלי נסיעה =
+                    // שתי מכסות שנשארו, וביום השלישי מותר שלוש), וחריגה לא נגררת: היתרה לא יורדת מתחת ל-0.
+                    // מה שנסעו בכל יום נאמד מהקריאות שהוזנו: בין שתי קריאות הנסיעה מחולקת שווה לאורך הזמן.
+                    {
+                        const monthStartOf = (key) => { const kp = key.split('-').map(Number); return new Date(kp[0], kp[1], 1).getTime(); };
+                        const openKey = state.openMonthKey;
+                        const openStartKm = state.monthStartKm != null ? state.monthStartKm : state.current;
+                        const anchors = [
+                            { at: leaseStartDate.getTime(), km: baseline },
+                            { at: monthStartOf(openKey), km: openStartKm }
+                        ];
+                        // תחילת כל חודש סגור = תחילת החודש שאחריו פחות מה שנסעו בו
+                        let backKm = openStartKm;
+                        (state.history || [])
+                            .filter(h => compareMonthKeys(h.monthKey, openKey) < 0)
+                            .sort((x, y) => compareMonthKeys(y.monthKey, x.monthKey))
+                            .forEach(h => { backKm -= h.km; anchors.push({ at: monthStartOf(h.monthKey), km: backKm }); });
+                        monthCheckpoints(state).forEach(c => anchors.push({ at: c.at, km: c.km }));
+                        const pts = anchors.filter(x => x.at >= leaseStartDate.getTime()).sort((x, y) => x.at - y.at || x.km - y.km);
                         const odometerAt = (t) => {
-                            if (t <= dayPoints[0].at) return dayPoints[0].km;
-                            const last = dayPoints[dayPoints.length - 1];
-                            if (t >= last.at) return last.km;
-                            for (let i = 1; i < dayPoints.length; i++) {
-                                if (t <= dayPoints[i].at) {
-                                    const p0 = dayPoints[i - 1], p1 = dayPoints[i];
-                                    return p0.km + (p1.km - p0.km) * (t - p0.at) / (p1.at - p0.at);
+                            if (t <= pts[0].at) return pts[0].km;
+                            for (let i = 1; i < pts.length; i++) {
+                                if (t <= pts[i].at) {
+                                    const p0 = pts[i - 1], p1 = pts[i];
+                                    return p1.at === p0.at ? p1.km : p0.km + (p1.km - p0.km) * (t - p0.at) / (p1.at - p0.at);
                                 }
                             }
-                            return last.km;
+                            return pts[pts.length - 1].km;
                         };
                         const nowDate = new Date();
                         const todayStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate()).getTime();
-                        const yesterdayStart = todayStart - 86400000;
-                        const drivenYesterday = Math.max(0, odometerAt(todayStart) - odometerAt(yesterdayStart));
-                        const latestPoint = dayPoints[dayPoints.length - 1].km;
-                        const drivenToday = Math.max(0, latestPoint - odometerAt(todayStart));
-                        const leftToday = 2 * dailyQuota - drivenYesterday - drivenToday;
-                        if (leftToday < 0) {
-                            lines.push(`<span class="km-warning">⚠️ חרגת מהמותר עד סוף היום ב-${fmt(Math.round(-leftToday))} ק"מ</span>`);
-                        } else {
-                            lines.push(`מותר לנסוע עד סוף היום: <strong>${fmt(Math.round(leftToday))}</strong> ק"מ (מכסת היום + מה שנשאר מאתמול; אתמול נסעת כ-${fmt(Math.round(drivenYesterday))})`);
+                        const daysBefore = Math.round((todayStart - leaseStartDate.getTime()) / 86400000);
+                        if (daysBefore >= 0 && daysBefore < totalLeaseDays) {
+                            let carry = 0;
+                            for (let d = 0; d < daysBefore; d++) {
+                                const dayA = new Date(leaseStartDate.getFullYear(), leaseStartDate.getMonth(), leaseStartDate.getDate() + d).getTime();
+                                const dayB = new Date(leaseStartDate.getFullYear(), leaseStartDate.getMonth(), leaseStartDate.getDate() + d + 1).getTime();
+                                carry = Math.max(0, carry + dailyQuota - Math.max(0, odometerAt(dayB) - odometerAt(dayA)));
+                            }
+                            const drivenToday = Math.max(0, latestKmVal - odometerAt(todayStart));
+                            const leftToday = carry + dailyQuota - drivenToday;
+                            if (leftToday < 0) {
+                                lines.push(`<span class="km-warning">⚠️ חרגת מהמותר עד סוף היום ב-${fmt(Math.round(-leftToday))} ק"מ</span>`);
+                            } else {
+                                lines.push(`מותר לנסוע עד סוף היום: <strong>${fmt(Math.round(leftToday))}</strong> ק"מ (מכסת היום ${fmt(Math.round(dailyQuota))} + ${fmt(Math.round(carry))} שנצברו מימים קודמים)`);
+                            }
                         }
                     }
                     lines.push(`מותר לנסוע עד סוף החודש: <strong>${fmt(Math.round(allowedThroughMonthEnd))}</strong> ק"מ מתחילת הליסינג (${daysThroughMonthEnd} ימים)`);
@@ -3515,7 +3534,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-11-05-c';
+            const BUILD_ID = '2026-11-08-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
