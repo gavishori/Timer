@@ -2901,52 +2901,21 @@
 
                     lines.push(`מכסה יומית: <strong>${dailyQuota.toFixed(1)}</strong> ק"מ ליום (${fmt(ANNUAL_QUOTA)} ÷ ${totalLeaseDays} ימים)`);
 
-                    // מותר לנסוע עד סוף היום: מכסת היום + מה שנצבר מימים קודמים שלא נוצלו (מצטבר).
-                    // כל יום מוסיף את המכסה היומית ומפחית את מה שנסעו בו. עודף עובר ליום הבא (שני ימים בלי נסיעה =
-                    // שתי מכסות שנשארו, וביום השלישי מותר שלוש), וחריגה לא נגררת: היתרה לא יורדת מתחת ל-0.
-                    // מה שנסעו בכל יום נאמד מהקריאות שהוזנו: בין שתי קריאות הנסיעה מחולקת שווה לאורך הזמן.
+                    // מותר לנסוע עד סוף היום = המכסה היומית x ימי הליסינג עד היום (כולל היום) פחות כל מה שנסעו מתחילת
+                    // הליסינג (כולל רכבי הגישור). זו אותה יתרה מצטברת של "עד סוף החודש", רק עד היום:
+                    // עודף שלא נוצל מצטבר, וחריגה מקטינה את היתרה (אפשר גם לרדת מתחת ל-0), בלי לשכוח אף יום.
                     {
-                        const monthStartOf = (key) => { const kp = key.split('-').map(Number); return new Date(kp[0], kp[1], 1).getTime(); };
-                        const openKey = state.openMonthKey;
-                        const openStartKm = state.monthStartKm != null ? state.monthStartKm : state.current;
-                        const anchors = [
-                            { at: leaseStartDate.getTime(), km: baseline },
-                            { at: monthStartOf(openKey), km: openStartKm }
-                        ];
-                        // תחילת כל חודש סגור = תחילת החודש שאחריו פחות מה שנסעו בו
-                        let backKm = openStartKm;
-                        (state.history || [])
-                            .filter(h => compareMonthKeys(h.monthKey, openKey) < 0)
-                            .sort((x, y) => compareMonthKeys(y.monthKey, x.monthKey))
-                            .forEach(h => { backKm -= h.km; anchors.push({ at: monthStartOf(h.monthKey), km: backKm }); });
-                        monthCheckpoints(state).forEach(c => anchors.push({ at: c.at, km: c.km }));
-                        const pts = anchors.filter(x => x.at >= leaseStartDate.getTime()).sort((x, y) => x.at - y.at || x.km - y.km);
-                        const odometerAt = (t) => {
-                            if (t <= pts[0].at) return pts[0].km;
-                            for (let i = 1; i < pts.length; i++) {
-                                if (t <= pts[i].at) {
-                                    const p0 = pts[i - 1], p1 = pts[i];
-                                    return p1.at === p0.at ? p1.km : p0.km + (p1.km - p0.km) * (t - p0.at) / (p1.at - p0.at);
-                                }
-                            }
-                            return pts[pts.length - 1].km;
-                        };
                         const nowDate = new Date();
-                        const todayStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate()).getTime();
-                        const daysBefore = Math.round((todayStart - leaseStartDate.getTime()) / 86400000);
-                        if (daysBefore >= 0 && daysBefore < totalLeaseDays) {
-                            let carry = 0;
-                            for (let d = 0; d < daysBefore; d++) {
-                                const dayA = new Date(leaseStartDate.getFullYear(), leaseStartDate.getMonth(), leaseStartDate.getDate() + d).getTime();
-                                const dayB = new Date(leaseStartDate.getFullYear(), leaseStartDate.getMonth(), leaseStartDate.getDate() + d + 1).getTime();
-                                carry = Math.max(0, carry + dailyQuota - Math.max(0, odometerAt(dayB) - odometerAt(dayA)));
-                            }
-                            const drivenToday = Math.max(0, latestKmVal - odometerAt(todayStart));
-                            const leftToday = carry + dailyQuota - drivenToday;
+                        const todayStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate());
+                        const daysThroughToday = Math.max(0, Math.min(totalLeaseDays, Math.round((todayStart - leaseStartDate) / 86400000) + 1));
+                        if (daysThroughToday > 0) {
+                            const allowedToday = dailyQuota * daysThroughToday;
+                            const drivenSoFar = latestKmVal - baseline;
+                            const leftToday = allowedToday - drivenSoFar;
                             if (leftToday < 0) {
-                                lines.push(`<span class="km-warning">⚠️ חרגת מהמותר עד סוף היום ב-${fmt(Math.round(-leftToday))} ק"מ</span>`);
+                                lines.push(`<span class="km-warning">⚠️ חרגת מהמותר עד היום ב-${fmt(Math.round(-leftToday))} ק"מ (מותר עד היום ${fmt(Math.round(allowedToday))}, נסעת ${fmt(Math.round(drivenSoFar))})</span>`);
                             } else {
-                                lines.push(`מותר לנסוע עד סוף היום: <strong>${fmt(Math.round(leftToday))}</strong> ק"מ (מכסת היום ${fmt(Math.round(dailyQuota))} + ${fmt(Math.round(carry))} שנצברו מימים קודמים)`);
+                                lines.push(`מותר לנסוע עד סוף היום: <strong>${fmt(Math.round(leftToday))}</strong> ק"מ (מותר עד היום ${fmt(Math.round(allowedToday))} פחות ${fmt(Math.round(drivenSoFar))} שנסעת)`);
                             }
                         }
                     }
@@ -3651,7 +3620,7 @@
         // עדכון עצמי: דפדפנים בנייד שומרים דף ישן בזיכרון. בכל פתיחה/חזרה לדף בודקים מול השרת
         // אם יצאה גרסה חדשה, ואם כן - טוענים מחדש פעם אחת.
         (function selfUpdate() {
-            const BUILD_ID = '2026-11-09-a';
+            const BUILD_ID = '2026-11-13-a';
             async function check() {
                 try {
                     const res = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
